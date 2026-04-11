@@ -15,7 +15,7 @@ Project Goals:
   Allow users to create and race routes
   Make a leaderboard system
   Ant-cheat system
-  Key Features:
+Key Features:
   Route Creation(point A to point B, Routes are stored and reusable)
   Race Tracking(Automatic start at point A and end at point B, tracks using precison GPS)
   Ghost Racing(Users go against fasterest run)
