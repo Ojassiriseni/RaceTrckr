@@ -17,7 +17,7 @@ const leaderboardStore = {
   add(entry: any) {
     this.data.push(entry);
     this.data.sort((a, b) => b.avgSpeed - a.avgSpeed);
-    this.data = this.data.slice(0, 10); // top 10
+    this.data = this.data.slice(0, 10); 
   },
 
   get() {
@@ -60,7 +60,7 @@ export default function Race() {
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
     );
 
-    if (!data || !data.length) return null;
+    if (!data?.length) return null;
 
     return {
       latitude: parseFloat(data[0].lat),
@@ -206,7 +206,7 @@ export default function Race() {
         style={{ position:'absolute', top:0, width:'100%', padding:20 }}
       >
         <Text style={{ color:'white', fontSize:28, fontWeight:'900' }}>
-          SPEED TRACKER
+          speed trckr
         </Text>
 
         <Text style={{ color:'#38bdf8' }}>
@@ -246,9 +246,12 @@ export default function Race() {
         right:10,
         top:120,
         width:160,
-        backgroundColor:'#0f172a',
+        backgroundColor:'rgba(15,23,42,0.6)',
+        backdropFilter:'blur(10px)',
+        borderRadius:16,
+        borderWidth:1,
+        borderColor:'rgba(255,255,255,.08)',
         padding:10,
-        borderRadius:12
       }}>
         <Text style={{ color:'white', fontWeight:'bold', marginBottom:6 }}>
           Leaderboard
