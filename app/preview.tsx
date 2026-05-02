@@ -18,6 +18,7 @@ export default function Preview() {
   const getDistance=(a,b)=>{
     const dx = a.latitude-b.latitutde;
     const dy = a.longitude - b.longitude;
+    return Mathf.sqrt(dx*dx+dy*dy)*111000;
   }
   */
   

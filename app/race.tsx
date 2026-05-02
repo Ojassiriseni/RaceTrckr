@@ -39,6 +39,11 @@ export default function Race() {
 
   const [avgSpeed, setAvgSpeed] = useState(0);
   const [bestSpeed, setBestSpeed] = useState(0);
+ 
+  const [finished, setFinished] = useState(false);
+  const [finalTime,setFinalTime] = useState(0);
+  const finishTriggered = useRef(false);
+
 
   const speedAnim = useRef(new Animated.Value(0)).current;
   const prevLoc = useRef<any>(null);
@@ -54,6 +59,13 @@ export default function Race() {
       return null;
     }
   };
+  /*
+  const getDis=(a,b)=>{
+    const dx = a.latitude - b.latitude;
+    const dy = a.longitude-b.longitude;
+    return Math.sqrt(dx*dx+dy*dy)*111000;
+  };
+  */
 
   const geocode = async (query: string) => {
     const data = await safeFetch(
