@@ -23,3 +23,5 @@ Key Features:
   Leaderboard(stores fastest runtimes for each route, displays ranking),
   Car Profiles(users can input vehicle details),
   Anti Cheat System(detects gps jumps).
+Credits:
+  This app was developed with the help and assistance of ChatGPT(GPT 5.3). Which was used to help with code generation and debugging. All code was reviewed by students to check for understanding and correctness and usability.
