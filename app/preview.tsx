@@ -11,6 +11,15 @@ export default function Preview() {
   const [endCoord, setEndCoord] = useState<any>(null);
   const [routeCoords, setRouteCoords] = useState<any[]>([]);
 
+  const[finished,setFinished]=useState(false);
+  const[finalTime,setFinalTime]=useState(0);
+  //const finishTriggered =  useRef(false);
+/*
+  const getDistance=(a,b)=>{
+    const dx = a.latitude-b.latitutde;
+    const dy = a.longitude - b.longitude;
+  }
+  */
   
   const geocode = async (query: string) => {
     const res = await fetch(
