@@ -19,9 +19,6 @@ export default function Home() {
 
   const debounceRef = useRef<any>(null);
 
-  /* =========================
-     SAFE SEARCH (NO CRASHES)
-  ========================= */
   const searchPlaces = async (text: string, setFn: any) => {
   if (text.length < 3) {
     setFn([]);
@@ -41,7 +38,7 @@ export default function Home() {
 
     const textResponse = await res.text();
 
-    // 🚨 CHECK IF IT'S HTML (BLOCKED / ERROR)
+    
     if (textResponse.trim().startsWith('<')) {
       console.log("Blocked or HTML response from API");
       setFn([]);
@@ -91,7 +88,6 @@ export default function Home() {
         RaceTrckr
       </Text>
 
-      {/* ================= START ================= */}
       <TextInput
         placeholder="Start location"
         placeholderTextColor="#94a3b8"
@@ -124,7 +120,6 @@ export default function Home() {
         </View>
       )}
 
-      {/* ================= END ================= */}
       <TextInput
         placeholder="End location"
         placeholderTextColor="#94a3b8"
@@ -157,7 +152,6 @@ export default function Home() {
         </View>
       )}
 
-      {/* ================= BUTTON ================= */}
       <TouchableOpacity
         onPress={goPreview}
         style={button}
@@ -171,7 +165,7 @@ export default function Home() {
   );
 }
 
-/* ================= STYLES ================= */
+
 
 const inputStyle = {
   backgroundColor:'#0f172a',
