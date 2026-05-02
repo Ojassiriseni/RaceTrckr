@@ -11,7 +11,7 @@ export default function Preview() {
   const [endCoord, setEndCoord] = useState<any>(null);
   const [routeCoords, setRouteCoords] = useState<any[]>([]);
 
-  /* 🔥 GEOCODER */
+  
   const geocode = async (query: string) => {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
@@ -26,7 +26,6 @@ export default function Preview() {
       : null;
   };
 
-  /* 🚀 ROUTE */
   const getRoute = async (s: any, e: any) => {
     const res = await fetch(
       `https://api.openrouteservice.org/v2/directions/driving-car?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjYzMzNiZTcwODI1ZDQ4Y2VhY2IzMDM4OWVjNmMzMmQ2IiwiaCI6Im11cm11cjY0In0=&start=${s.longitude},${s.latitude}&end=${e.longitude},${e.latitude}`
@@ -79,7 +78,6 @@ export default function Preview() {
         )}
       </MapView>
 
-      {/* 🚀 FIXED BUTTON */}
       <TouchableOpacity
         onPress={() =>
           router.push({
@@ -98,7 +96,7 @@ export default function Preview() {
         }}
       >
         <Text style={{ textAlign:'center', fontWeight:'800' }}>
-          START RACE 🏁
+          START RACE 
         </Text>
       </TouchableOpacity>
 

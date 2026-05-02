@@ -11,9 +11,6 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
-/* =========================
-   LOCAL LEADERBOARD STORE
-========================= */
 const leaderboardStore = {
   data: [] as any[],
 
@@ -48,9 +45,6 @@ export default function Race() {
 
   const speeds = useRef<number[]>([]);
 
-  /* =========================
-     SAFE FETCH
-  ========================= */
   const safeFetch = async (url: string) => {
     try {
       const res = await fetch(url);
@@ -61,9 +55,6 @@ export default function Race() {
     }
   };
 
-  /* =========================
-     GEOCODE
-  ========================= */
   const geocode = async (query: string) => {
     const data = await safeFetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
@@ -77,9 +68,6 @@ export default function Race() {
     };
   };
 
-  /* =========================
-     ROUTE
-========================= */
   const getRoute = async (s: any, e: any) => {
     const data = await safeFetch(
       `https://api.openrouteservice.org/v2/directions/driving-car?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjYzMzNiZTcwODI1ZDQ4Y2VhY2IzMDM4OWVjNmMzMmQ2IiwiaCI6Im11cm11cjY0In0=&start=${s.longitude},${s.latitude}&end=${e.longitude},${e.latitude}`
@@ -100,9 +88,6 @@ export default function Race() {
     setLoadingRoute(false);
   };
 
-  /* =========================
-     LOAD ROUTE
-  ========================= */
   useEffect(() => {
     const load = async () => {
       const s = await geocode(String(start));
@@ -122,9 +107,6 @@ export default function Race() {
     load();
   }, []);
 
-  /* =========================
-     GPS TRACKING + SPEED
-  ========================= */
   useEffect(() => {
     let sub: any;
 
@@ -172,9 +154,6 @@ export default function Race() {
     return () => sub && sub.remove();
   }, []);
 
-  /* =========================
-     END SESSION → SAVE SCORE
-  ========================= */
   useEffect(() => {
     if (!loadingRoute && speeds.current.length > 5) {
       leaderboardStore.add({
@@ -186,9 +165,7 @@ export default function Race() {
     }
   }, [loadingRoute]);
 
-  /* =========================
-     UI SCALE
-  ========================= */
+  
   const speedWidth = speedAnim.interpolate({
     inputRange: [0, 140],
     outputRange: ['0%', '90%']
@@ -223,7 +200,7 @@ export default function Race() {
         {endCoord && <Marker coordinate={endCoord} pinColor="red" />}
       </MapView>
 
-      {/* ================= HUD ================= */}
+      
       <LinearGradient
         colors={['#000000cc','transparent']}
         style={{ position:'absolute', top:0, width:'100%', padding:20 }}
@@ -237,7 +214,7 @@ export default function Race() {
         </Text>
       </LinearGradient>
 
-      {/* ================= SPEEDOMETER ================= */}
+      
       <View style={{
         position:'absolute',
         bottom:100,
@@ -263,7 +240,7 @@ export default function Race() {
         </Text>
       </View>
 
-      {/* ================= LEADERBOARD ================= */}
+      
       <View style={{
         position:'absolute',
         right:10,
