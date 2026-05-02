@@ -159,6 +159,10 @@ export default function Race() {
             duration: 300,
             useNativeDriver: false
           }).start();
+
+          if(!finishTriggered.current&&endCoord&&location){
+            //const dist = getDistance(location,endCoord);
+          }
         }
       );
     })();
