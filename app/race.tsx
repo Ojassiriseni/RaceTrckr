@@ -347,8 +347,61 @@ export default function Race() {
             </Text>
           )}
         />
+        
       </View>
+      {finished && (
+  <View
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.92)',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}
+  >
+    <Text
+      style={{
+        color: 'white',
+        fontSize: 42,
+        fontWeight: '900'
+      }}
+    >
+      FINISHED
+    </Text>
 
-    </View>
+    <Text
+      style={{
+        color: '#38bdf8',
+        fontSize: 20,
+        marginTop: 15
+      }}
+    >
+      Final Time: {(finalTime / 1000).toFixed(1)}s
+    </Text>
+
+    <Text
+      style={{
+        color: '#94a3b8',
+        marginTop: 8
+      }}
+    >
+      Avg Speed: {avgSpeed.toFixed(1)} km/h
+    </Text>
+
+    <Text
+      style={{
+        color: '#94a3b8',
+        marginTop: 5
+      }}
+    >
+      Best Speed: {bestSpeed.toFixed(1)} km/h
+    </Text>
+  </View>
+  
+)}
+</View>
   );
 }
