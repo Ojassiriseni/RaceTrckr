@@ -65,13 +65,12 @@ export default function Race() {
       return null;
     }
   };
-  /*
-  const getDis=(a,b)=>{
+  const getDistance = (a:any,b:any)=>{
     const dx = a.latitude - b.latitude;
-    const dy = a.longitude-b.longitude;
-    return Math.sqrt(dx*dx+dy*dy)*111000;
-  };
-  */
+    const dy = a.longitude - b.longitude;
+
+    return Math.sqrt(dx*dx+dy*dy);
+  }
 
   const geocode = async (query: string) => {
     const data = await safeFetch(
