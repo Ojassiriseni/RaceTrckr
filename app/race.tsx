@@ -369,9 +369,24 @@ export default function Race() {
           data={leaderboardStore.get()}
           keyExtractor={(_, i) => i.toString()}
           renderItem={({ item, index }) => (
-            <Text style={{ color:'#94a3b8', fontSize:12 }}>
-              {index + 1}. {item.avgSpeed} km/h
-            </Text>
+            <View style={{marginBottom:8}}>
+              <Text
+                style={{
+                  color:'#ffffff',
+                  fontSize:12,
+                  fontWeight:'700'
+                }}
+                numberOfLines={1}
+              >
+                #{index+1}{item.route}
+              </Text>
+              <Text style={{color:'#38bdf8',fontSize:12}}>
+                Time: {item.time}s
+              </Text>
+              <Text style={{color:'#38bdf8',fontSize:12}}>
+                Avg Speed: {item.abgSpeed} km/h
+              </Text>
+            </View>
           )}
         />
         
