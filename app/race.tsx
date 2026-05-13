@@ -176,6 +176,21 @@ export default function Race() {
 
           if(!finishTriggered.current&&endCoord){
             const dist = getDistance(c,endCoord);
+
+            if(dist<FINISH_RADIUS)
+            {
+              finishTriggered.current=true;
+
+              setFinished(true);
+              setFinalTime(elapsedTime);
+
+              leaderboardStore.add({
+                route : `${start} → ${end}`,
+                avgSpeed:avgSpeed.toFixed(1),
+                bestSpeed:bestSpeed.toFixed(1),
+                time:(elapsedTime/1000).toFixed(1)
+              });
+            }
           }
         }
       );
