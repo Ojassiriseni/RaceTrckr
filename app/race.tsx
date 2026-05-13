@@ -9,7 +9,7 @@ import {
   Text,
   View
 } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
 
 const leaderboardStore = {
   data: [] as any[],
@@ -25,6 +25,9 @@ const leaderboardStore = {
   }
 };
 
+const START_RADIUS = 80;
+const FINISH_RADIUS = 120;
+
 export default function Race() {
   const { start, end } = useLocalSearchParams();
 
@@ -39,6 +42,9 @@ export default function Race() {
 
   const [avgSpeed, setAvgSpeed] = useState(0);
   const [bestSpeed, setBestSpeed] = useState(0);
+
+  const [startTime, setStateTime] = useState<number|null>(null);
+  const [elapsedTime,setElapsedTime] = useState(0);
  
   const [finished, setFinished] = useState(false);
   const [finalTime,setFinalTime] = useState(0);
