@@ -241,8 +241,40 @@ export default function Race() {
         <Polyline coordinates={path} strokeWidth={3} strokeColor="#22c55e" />
 
         {location && <Marker coordinate={location} />}
-        {startCoord && <Marker coordinate={startCoord} pinColor="green" />}
-        {endCoord && <Marker coordinate={endCoord} pinColor="red" />}
+       
+        
+
+        {startCoord&&( 
+        <>
+          <Marker 
+          coordinate={startCoord}
+          pinColor="green"
+          />
+          <Circle
+            center={startCoord}
+            radius={START_RADIUS}
+            strokeWidth={2}
+            strokeColor='rgba(34,197,94,.9)'
+            fillColor='rgba(34,197,94,.2)'
+          />
+        </>
+        )}
+        {endCoord&&( 
+        <>
+          <Marker 
+          coordinate={endCoord}
+          pinColor="red"
+          />
+          <Circle
+            center={endCoord}
+            radius={FINISH_RADIUS}
+            strokeWidth={2}
+            strokeColor='rgba(239,68,68,.9)'
+            fillColor='rgba(239,68,68,.2)'
+          />
+        </>
+          
+        )}
       </MapView>
 
       
@@ -252,6 +284,10 @@ export default function Race() {
       >
         <Text style={{ color:'white', fontSize:28, fontWeight:'900' }}>
           speed trckr
+        </Text>
+        
+        <Text style={{ color:'#38bdf8' }}>
+          Time: {(elapsedTime/1000).toFixed(1)}s
         </Text>
 
         <Text style={{ color:'#38bdf8' }}>
