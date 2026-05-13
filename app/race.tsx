@@ -25,7 +25,7 @@ const leaderboardStore = {
   }
 };
 
-const START_RADIUS = 80;
+const START_RADIUS = 120;
 const FINISH_RADIUS = 120;
 
 export default function Race() {
@@ -378,7 +378,7 @@ export default function Race() {
                 }}
                 numberOfLines={1}
               >
-                #{index+1}{item.route}
+                #{index+1} {item.route}
               </Text>
               <Text style={{color:'#38bdf8',fontSize:12}}>
                 Time: {item.time}s
