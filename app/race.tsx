@@ -43,7 +43,7 @@ export default function Race() {
   const [avgSpeed, setAvgSpeed] = useState(0);
   const [bestSpeed, setBestSpeed] = useState(0);
 
-  const [startTime, setStateTime] = useState<number|null>(null);
+  const [startTime, setStartTime] = useState<number|null>(null);
   const [elapsedTime,setElapsedTime] = useState(0);
  
   const [finished, setFinished] = useState(false);
@@ -69,7 +69,7 @@ export default function Race() {
     const dx = a.latitude - b.latitude;
     const dy = a.longitude - b.longitude;
 
-    return Math.sqrt(dx*dx+dy*dy);
+    return Math.sqrt(dx*dx+dy*dy)*111000;
   }
 
   const geocode = async (query: string) => {
@@ -134,9 +134,18 @@ export default function Race() {
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 800 },
         (loc) => {
+          if(finished) return;
           const c = loc.coords;
           setLocation(c);
+          if(!startTime){
+            setStartTime(Date.now());
+          }
           setPath(p => [...p, c]);
+
+          if(startTime)
+          {
+            setElapsedTime(Date.now()-startTime);
+          }
 
           let speed = 0;
 
@@ -165,7 +174,7 @@ export default function Race() {
             useNativeDriver: false
           }).start();
 
-          if(!finishTriggered.current&&endCoord&&location){
+          if(!finishTriggered.current&&endCoord){
             //const dist = getDistance(location,endCoord);
           }
         }
