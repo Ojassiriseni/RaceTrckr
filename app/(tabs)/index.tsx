@@ -18,6 +18,7 @@ export default function Home() {
   const [endSuggestions, setEndSuggestions] = useState<any[]>([]);
 
   const debounceRef = useRef<any>(null);
+  const lastQuery = useRef('');
 
   const searchPlaces = async (text: string, setFn: any) => {
   if (text.length < 3) {
@@ -25,39 +26,45 @@ export default function Home() {
     return;
   }
 
-  try {
-    const url =
-      `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(text)}`;
-
-    const res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'race-tracker-app'
-      }
-    });
-
-    const textResponse = await res.text();
-
-    
-    if (textResponse.trim().startsWith('<')) {
-      console.log("Blocked or HTML response from API");
-      setFn([]);
-      return;
-    }
-
-    const data = JSON.parse(textResponse);
-
-    if (!Array.isArray(data)) {
-      setFn([]);
-      return;
-    }
-
-    setFn(data);
-
-  } catch (err) {
-    console.log("Search failed:", err);
-    setFn([]);
+ 
+  if (debounceRef.current) {
+    clearTimeout(debounceRef.current);
   }
+
+  debounceRef.current = setTimeout(async () => {
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(text)}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'RaceTrackerApp/1.0'
+        }
+      });
+
+      const raw = await res.text();
+
+      
+      if (raw.trim().startsWith('<')) {
+        console.log("Blocked or HTML response");
+        setFn([]);
+        return;
+      }
+
+      const data = JSON.parse(raw);
+
+      if (!Array.isArray(data)) {
+        setFn([]);
+        return;
+      }
+
+      setFn(data);
+    } catch (err) {
+      console.log("Search failed:", err);
+      setFn([]);
+    }
+  }, 600); 
 };
 
   const goPreview = () => {
@@ -94,7 +101,11 @@ export default function Home() {
         value={startText}
         onChangeText={(t) => {
           setStartText(t);
-          searchPlaces(t, setStartSuggestions);
+          if(debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current=setTimeout(()=>{
+            searchPlaces(t, setStartSuggestions);
+          },400);
+          
         }}
         style={inputStyle}
       />

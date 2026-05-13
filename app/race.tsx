@@ -54,17 +54,33 @@ export default function Race() {
   const speedAnim = useRef(new Animated.Value(0)).current;
   const prevLoc = useRef<any>(null);
 
+  const delay = (ms:number)=> new Promise(r=> setTimeout(r,ms));
+
   const speeds = useRef<number[]>([]);
 
   const safeFetch = async (url: string) => {
-    try {
-      const res = await fetch(url);
-      const text = await res.text();
-      return JSON.parse(text);
-    } catch {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'RaceTrackerApp/1.0 (contact: your-email@example.com)',
+        'Accept': 'application/json'
+      }
+    });
+
+    const text = await res.text();
+
+   
+    if (text.trim().startsWith('<')) {
+      console.log('❌ API returned HTML (blocked or rate limited)');
       return null;
     }
-  };
+
+    return JSON.parse(text);
+  } catch (err) {
+    console.log('❌ Fetch error:', err);
+    return null;
+  }
+};
   const getDistance = (a:any,b:any)=>{
     const dx = a.latitude - b.latitude;
     const dy = a.longitude - b.longitude;
@@ -73,17 +89,19 @@ export default function Race() {
   }
 
   const geocode = async (query: string) => {
-    const data = await safeFetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
-    );
+    
+    await delay(500);
+  const data = await safeFetch(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+  );
 
-    if (!data?.length) return null;
+  if (!Array.isArray(data) || data.length === 0) return null;
 
-    return {
-      latitude: parseFloat(data[0].lat),
-      longitude: parseFloat(data[0].lon)
-    };
+  return {
+    latitude: parseFloat(data[0].lat),
+    longitude: parseFloat(data[0].lon)
   };
+};
 
   const getRoute = async (s: any, e: any) => {
     const data = await safeFetch(
