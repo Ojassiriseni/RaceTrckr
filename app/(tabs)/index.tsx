@@ -19,8 +19,10 @@ export default function Home() {
 
   const debounceRef = useRef<any>(null);
   const lastQuery = useRef('');
+  const lastRequestTime = useRef(0);
 
   const searchPlaces = async (text: string, setFn: any) => {
+    
   if (text.length < 3) {
     setFn([]);
     return;
@@ -35,7 +37,12 @@ export default function Home() {
     try {
       const url =
         `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(text)}`;
-
+      const now = Date.now();
+      if(now-lastRequestTime.current<1200)
+      {
+        return;
+      }
+      lastRequestTime.current=now;
       const res = await fetch(url, {
         headers: {
           'Accept': 'application/json',
@@ -47,7 +54,7 @@ export default function Home() {
 
       
       if (raw.trim().startsWith('<')) {
-        console.log("Blocked or HTML response");
+        console.log("Blocked by Nominatim");
         setFn([]);
         return;
       }
@@ -58,7 +65,7 @@ export default function Home() {
         setFn([]);
         return;
       }
-
+      if(text!==lastQuery.current) return;
       setFn(data);
     } catch (err) {
       console.log("Search failed:", err);
@@ -103,6 +110,7 @@ export default function Home() {
           setStartText(t);
           if(debounceRef.current) clearTimeout(debounceRef.current);
           debounceRef.current=setTimeout(()=>{
+            lastQuery.current=t;
             searchPlaces(t, setStartSuggestions);
           },400);
           
@@ -122,7 +130,7 @@ export default function Home() {
                   setStartSuggestions([]);
                 }}
               >
-                <Text style={suggestionText}>
+                <Text numberOfLines={1} style={suggestionText}>
                   {item.display_name}
                 </Text>
               </TouchableOpacity>

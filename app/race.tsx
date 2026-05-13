@@ -60,22 +60,24 @@ export default function Race() {
 
   const safeFetch = async (url: string) => {
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'RaceTrackerApp/1.0 (contact: your-email@example.com)',
-        'Accept': 'application/json'
-      }
-    });
+    const res = await fetch(url);
 
     const text = await res.text();
 
-   
-    if (text.trim().startsWith('<')) {
-      console.log('❌ API returned HTML (blocked or rate limited)');
+    // 🚨 Block HTML or non-JSON responses
+    if (!text || text.trim().startsWith('<')) {
+      console.log('❌ Blocked / HTML response');
       return null;
     }
 
-    return JSON.parse(text);
+    // 🚨 Try parse safely
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      console.log('❌ Not JSON response:', text.slice(0, 50));
+      return null;
+    }
+
   } catch (err) {
     console.log('❌ Fetch error:', err);
     return null;
@@ -155,11 +157,16 @@ export default function Race() {
           if(finished) return;
           const c = loc.coords;
           setLocation(c);
-          if(!startTime){
-            setStartTime(Date.now());
-          }
           setPath(p => [...p, c]);
 
+          if(!startTime&&startCoord){
+            const distToStart = getDistance(c,startCoord);
+            if(distToStart<START_RADIUS)
+            {
+              setStartTime(Date.now());
+
+            }
+          }
           if(startTime)
           {
             setElapsedTime(Date.now()-startTime);
@@ -192,21 +199,23 @@ export default function Race() {
             useNativeDriver: false
           }).start();
 
-          if(!finishTriggered.current&&endCoord){
+          if(!finishTriggered.current&&startTime&&endCoord){
             const dist = getDistance(c,endCoord);
 
             if(dist<FINISH_RADIUS)
             {
               finishTriggered.current=true;
+              
+              const final = Date.now()-startTime;
 
               setFinished(true);
-              setFinalTime(elapsedTime);
+              setFinalTime(final);
 
               leaderboardStore.add({
                 route : `${start} → ${end}`,
                 avgSpeed:avgSpeed.toFixed(1),
                 bestSpeed:bestSpeed.toFixed(1),
-                time:(elapsedTime/1000).toFixed(1)
+                time:(final/1000).toFixed(1)
               });
             }
           }
@@ -215,7 +224,7 @@ export default function Race() {
     })();
 
     return () => sub && sub.remove();
-  }, []);
+  }, [startTime,finished,startCoord,endCoord]);
 
   useEffect(() => {
     if (!loadingRoute && speeds.current.length > 5) {
