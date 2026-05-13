@@ -175,7 +175,7 @@ export default function Race() {
           }).start();
 
           if(!finishTriggered.current&&endCoord){
-            //const dist = getDistance(location,endCoord);
+            const dist = getDistance(c,endCoord);
           }
         }
       );
