@@ -8,8 +8,11 @@ import {
   View
 } from 'react-native';
 
+import { useAuth } from '@/contexts/auth-context';
+
 export default function Home() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [startText, setStartText] = useState('');
   const [endText, setEndText] = useState('');
@@ -97,9 +100,14 @@ export default function Home() {
         color:'white',
         fontSize:34,
         fontWeight:'800',
-        marginBottom:20
+        marginBottom:6
       }}>
         RaceTrckr
+      </Text>
+      <Text style={{ color: '#64748b', fontSize: 14, marginBottom: 16 }}>
+        {user
+          ? `Signed in as ${user.email} — finishes save to Data.`
+          : 'Use Profile to sign in and save race results to Data.'}
       </Text>
 
       <TextInput
@@ -177,6 +185,38 @@ export default function Home() {
       >
         <Text style={{ textAlign:'center', fontWeight:'700' }}>
           Preview Route
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push('/pin-setup')}
+        style={{
+          marginTop: 14,
+          backgroundColor: '#0f172a',
+          padding: 15,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#38bdf8'
+        }}
+      >
+        <Text style={{ textAlign: 'center', fontWeight: '700', color: '#38bdf8' }}>
+          Drop pins (map tap or GPS)
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push('/race-advanced')}
+        style={{
+          marginTop: 12,
+          paddingVertical: 14,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#334155',
+          backgroundColor: '#0f172a'
+        }}
+      >
+        <Text style={{ textAlign: 'center', fontWeight: '700', color: '#94a3b8' }}>
+          Race zones — start / finish / lap radii
         </Text>
       </TouchableOpacity>
 

@@ -26,6 +26,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "RaceTrckr uses your location to place start/finish pins and time the race."
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",

@@ -1,15 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
   FlatList,
+  ScrollView,
   Text,
+  TouchableOpacity,
   View
 } from 'react-native';
 import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
+
+import { useAuth } from '@/contexts/auth-context';
+import { useRaceSettings } from '@/contexts/race-settings-context';
+import { appendRun } from '@/lib/runs-storage';
 
 const leaderboardStore = {
   data: [] as any[],
@@ -25,11 +31,45 @@ const leaderboardStore = {
   }
 };
 
-const START_RADIUS = 120;
-const FINISH_RADIUS = 120;
+function parseCoordParams(p: Record<string, string | string[] | undefined>) {
+  const gl = (k: string) => {
+    const v = p[k];
+    const s = Array.isArray(v) ? v[0] : v;
+    return s != null && s !== '' ? Number(s) : NaN;
+  };
+  const slat = gl('startLat');
+  const slng = gl('startLng');
+  const elat = gl('endLat');
+  const elng = gl('endLng');
+  if ([slat, slng, elat, elng].every((n) => Number.isFinite(n))) {
+    return {
+      start: { latitude: slat, longitude: slng },
+      end: { latitude: elat, longitude: elng }
+    };
+  }
+  return null;
+}
 
 export default function Race() {
-  const { start, end } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const { start, end } = params;
+  const { user } = useAuth();
+  const { settings } = useRaceSettings();
+  const startZoneM = settings.startRadiusM;
+  const endZoneM = settings.endRadiusM;
+  const lapInnerM = settings.lapInnerRadiusM;
+  const lapOuterM = settings.lapOuterRadiusM;
+
+  const pinCoords = useMemo(
+    () => parseCoordParams(params as Record<string, string | string[] | undefined>),
+    [params.startLat, params.startLng, params.endLat, params.endLng]
+  );
+
+  const lapMode = useMemo(() => {
+    const v = params.lapMode;
+    const s = Array.isArray(v) ? v[0] : v;
+    return s === '1' || s === 'true';
+  }, [params.lapMode]);
 
   const [location, setLocation] = useState<any>(null);
   const [routeCoords, setRouteCoords] = useState<any[]>([]);
@@ -49,6 +89,66 @@ export default function Race() {
   const [finished, setFinished] = useState(false);
   const [finalTime,setFinalTime] = useState(0);
   const finishTriggered = useRef(false);
+
+  const [lapTimesSec, setLapTimesSec] = useState<number[]>([]);
+  const lapTimesSecRef = useRef<number[]>([]);
+  const seenOutsideAfterArmRef = useRef(false);
+  const zoneInsideRef = useRef(false);
+  const currentLapStartRef = useRef<number | null>(null);
+
+  const [armed, setArmed] = useState(
+    () => !parseCoordParams(params as Record<string, string | string[] | undefined>)
+  );
+
+  const resetLapTracking = () => {
+    seenOutsideAfterArmRef.current = false;
+    zoneInsideRef.current = false;
+    currentLapStartRef.current = null;
+    lapTimesSecRef.current = [];
+    setLapTimesSec([]);
+  };
+
+  const commitFinish = useCallback(
+    (
+      totalMs: number,
+      lapsSnapshot: number[],
+      label: string,
+      avgKmh: number,
+      bestKmh: number
+    ) => {
+      finishTriggered.current = true;
+      setFinished(true);
+      setFinalTime(totalMs);
+
+      const totalSec = totalMs / 1000;
+      const bestLap =
+        lapsSnapshot.length > 0 ? Math.min(...lapsSnapshot) : undefined;
+
+      leaderboardStore.add({
+        route: label,
+        avgSpeed: avgKmh.toFixed(1),
+        bestSpeed: bestKmh.toFixed(1),
+        time: totalSec.toFixed(1),
+        lapCount: lapsSnapshot.length,
+        bestLapSec: bestLap?.toFixed(2)
+      });
+
+      if (user) {
+        void appendRun(user.userId, {
+          route: label,
+          finalTimeSec: totalSec,
+          avgSpeedKmh: avgKmh,
+          bestSpeedKmh: bestKmh,
+          finishedAt: Date.now(),
+          mode: lapMode ? 'lap' : 'sprint',
+          lapCount: lapMode ? lapsSnapshot.length : undefined,
+          lapTimesSec: lapMode && lapsSnapshot.length ? lapsSnapshot : undefined,
+          bestLapSec: bestLap
+        });
+      }
+    },
+    [user, lapMode]
+  );
 
 
   const speedAnim = useRef(new Animated.Value(0)).current;
@@ -125,8 +225,36 @@ export default function Race() {
     setLoadingRoute(false);
   };
 
+  const skipRouteLoading = () => {
+    setRouteCoords([]);
+    setLoadingRoute(false);
+  };
+
   useEffect(() => {
     const load = async () => {
+      const fromPins = parseCoordParams(
+        params as Record<string, string | string[] | undefined>
+      );
+      const v = params.lapMode;
+      const isLap = (Array.isArray(v) ? v[0] : v) === '1' || (Array.isArray(v) ? v[0] : v) === 'true';
+
+      if (fromPins) {
+        setStartCoord(fromPins.start);
+        setEndCoord(fromPins.end);
+        if (isLap) {
+          skipRouteLoading();
+          return;
+        }
+        getRoute(fromPins.start, fromPins.end);
+        return;
+      }
+
+      if (!start || !end) {
+        setError('Missing start or finish');
+        setLoadingRoute(false);
+        return;
+      }
+
       const s = await geocode(String(start));
       const e = await geocode(String(end));
 
@@ -142,7 +270,7 @@ export default function Race() {
     };
 
     load();
-  }, []);
+  }, [start, end, params.startLat, params.startLng, params.endLat, params.endLng, params.lapMode]);
 
   useEffect(() => {
     let sub: any;
@@ -154,22 +282,47 @@ export default function Race() {
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 800 },
         (loc) => {
-          if(finished) return;
+          if (finished) return;
           const c = loc.coords;
           setLocation(c);
-          setPath(p => [...p, c]);
+          setPath((p) => [...p, c]);
 
-          if(!startTime&&startCoord){
-            const distToStart = getDistance(c,startCoord);
-            if(distToStart<START_RADIUS)
-            {
-              setStartTime(Date.now());
+          if (lapMode && armed && startCoord) {
+            const d = getDistance(c, startCoord);
+            if (!seenOutsideAfterArmRef.current && d > lapOuterM) {
+              seenOutsideAfterArmRef.current = true;
+            }
+            const prev = zoneInsideRef.current;
+            let inZ = prev;
+            if (prev && d > lapOuterM) inZ = false;
+            else if (!prev && d < lapInnerM) inZ = true;
+            zoneInsideRef.current = inZ;
+            const crossedIn = !prev && inZ;
 
+            if (seenOutsideAfterArmRef.current && crossedIn) {
+              const now = Date.now();
+              if (currentLapStartRef.current == null) {
+                currentLapStartRef.current = now;
+                setStartTime(now);
+              } else if (!finishTriggered.current) {
+                const lapSec = (now - currentLapStartRef.current) / 1000;
+                currentLapStartRef.current = now;
+                const next = [...lapTimesSecRef.current, lapSec];
+                lapTimesSecRef.current = next;
+                setLapTimesSec(next);
+              }
+            }
+          } else if (!lapMode) {
+            if (armed && !startTime && startCoord) {
+              const distToStart = getDistance(c, startCoord);
+              if (distToStart < startZoneM) {
+                setStartTime(Date.now());
+              }
             }
           }
-          if(startTime)
-          {
-            setElapsedTime(Date.now()-startTime);
+
+          if (startTime) {
+            setElapsedTime(Date.now() - startTime);
           }
 
           let speed = 0;
@@ -193,51 +346,55 @@ export default function Race() {
           setAvgSpeed(avg);
           setBestSpeed(Math.max(...speeds.current));
 
+          if (
+            !lapMode &&
+            !finishTriggered.current &&
+            startTime &&
+            endCoord
+          ) {
+            const dist = getDistance(c, endCoord);
+            if (dist < endZoneM) {
+              const final = Date.now() - startTime;
+              const bestKmh = speeds.current.length
+                ? Math.max(...speeds.current)
+                : 0;
+              commitFinish(
+                final,
+                [],
+                `${start} → ${end}`,
+                avg,
+                bestKmh
+              );
+            }
+          }
+
           Animated.timing(speedAnim, {
             toValue: speed,
             duration: 300,
             useNativeDriver: false
           }).start();
-
-          if(!finishTriggered.current&&startTime&&endCoord){
-            const dist = getDistance(c,endCoord);
-
-            if(dist<FINISH_RADIUS)
-            {
-              finishTriggered.current=true;
-              
-              const final = Date.now()-startTime;
-
-              setFinished(true);
-              setFinalTime(final);
-
-              leaderboardStore.add({
-                route : `${start} → ${end}`,
-                avgSpeed:avgSpeed.toFixed(1),
-                bestSpeed:bestSpeed.toFixed(1),
-                time:(final/1000).toFixed(1)
-              });
-            }
-          }
         }
       );
     })();
 
     return () => sub && sub.remove();
-  }, [startTime,finished,startCoord,endCoord]);
+  }, [
+    startTime,
+    finished,
+    startCoord,
+    endCoord,
+    armed,
+    user?.userId,
+    lapMode,
+    start,
+    end,
+    commitFinish,
+    startZoneM,
+    endZoneM,
+    lapInnerM,
+    lapOuterM
+  ]);
 
-  useEffect(() => {
-    if (!loadingRoute && speeds.current.length > 5) {
-      leaderboardStore.add({
-        route: `${start} → ${end}`,
-        avgSpeed: avgSpeed.toFixed(2),
-        bestSpeed: bestSpeed.toFixed(2),
-        time: speeds.current.length
-      });
-    }
-  }, [loadingRoute]);
-
-  
   const speedWidth = speedAnim.interpolate({
     inputRange: [0, 140],
     outputRange: ['0%', '90%']
@@ -247,7 +404,9 @@ export default function Race() {
     return (
       <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000' }}>
         <ActivityIndicator color="#38bdf8" size="large" />
-        <Text style={{ color:'white', marginTop:10 }}>Loading route...</Text>
+        <Text style={{ color:'white', marginTop:10 }}>
+          {lapMode ? 'Loading lap track…' : 'Loading route...'}
+        </Text>
       </View>
     );
   }
@@ -271,36 +430,44 @@ export default function Race() {
        
         
 
-        {startCoord&&( 
-        <>
-          <Marker 
-          coordinate={startCoord}
-          pinColor="green"
-          />
-          <Circle
-            center={startCoord}
-            radius={START_RADIUS}
-            strokeWidth={2}
-            strokeColor='rgba(34,197,94,.9)'
-            fillColor='rgba(34,197,94,.2)'
-          />
-        </>
-        )}
-        {endCoord&&( 
-        <>
-          <Marker 
-          coordinate={endCoord}
-          pinColor="red"
-          />
-          <Circle
-            center={endCoord}
-            radius={FINISH_RADIUS}
-            strokeWidth={2}
-            strokeColor='rgba(239,68,68,.9)'
-            fillColor='rgba(239,68,68,.2)'
-          />
-        </>
-          
+        {lapMode && startCoord ? (
+          <>
+            <Marker coordinate={startCoord} pinColor="#a855f7" />
+            <Circle
+              center={startCoord}
+              radius={lapInnerM}
+              strokeWidth={2}
+              strokeColor="rgba(168,85,247,.95)"
+              fillColor="rgba(168,85,247,.18)"
+            />
+          </>
+        ) : (
+          <>
+            {startCoord && (
+              <>
+                <Marker coordinate={startCoord} pinColor="green" />
+                <Circle
+                  center={startCoord}
+                  radius={startZoneM}
+                  strokeWidth={2}
+                  strokeColor="rgba(34,197,94,.9)"
+                  fillColor="rgba(34,197,94,.2)"
+                />
+              </>
+            )}
+            {endCoord && (
+              <>
+                <Marker coordinate={endCoord} pinColor="red" />
+                <Circle
+                  center={endCoord}
+                  radius={endZoneM}
+                  strokeWidth={2}
+                  strokeColor="rgba(239,68,68,.9)"
+                  fillColor="rgba(239,68,68,.2)"
+                />
+              </>
+            )}
+          </>
         )}
       </MapView>
 
@@ -312,6 +479,23 @@ export default function Race() {
         <Text style={{ color:'white', fontSize:28, fontWeight:'900' }}>
           speed trckr
         </Text>
+
+        {!armed && pinCoords && (
+          <Text style={{ color: '#fbbf24', marginTop: 6, fontWeight: '700' }}>
+            {lapMode
+              ? 'Tap “Arm race” when ready — leave the purple zone once, then each time you cross it counts (first crossing starts the session).'
+              : 'Tap “Arm race” when you are ready — crossing the green zone starts the clock.'}
+          </Text>
+        )}
+
+        {lapMode && armed && !finished && startTime && (
+          <Text style={{ color: '#c4b5fd', marginTop: 6, fontWeight: '700' }}>
+            Lap {lapTimesSec.length + 1}
+            {lapTimesSec.length > 0
+              ? ` · Last ${lapTimesSec[lapTimesSec.length - 1].toFixed(1)}s`
+              : ''}
+          </Text>
+        )}
         
         <Text style={{ color:'#38bdf8' }}>
           Time: {(elapsedTime/1000).toFixed(1)}s
@@ -321,6 +505,65 @@ export default function Race() {
           Avg: {avgSpeed.toFixed(1)} km/h | Best: {bestSpeed.toFixed(1)} km/h
         </Text>
       </LinearGradient>
+
+      {!armed && pinCoords && !finished && (
+        <TouchableOpacity
+          onPress={() => {
+            if (lapMode) resetLapTracking();
+            setArmed(true);
+          }}
+          activeOpacity={0.85}
+          style={{
+            position: 'absolute',
+            bottom: 200,
+            alignSelf: 'center',
+            backgroundColor: '#f59e0b',
+            paddingVertical: 16,
+            paddingHorizontal: 28,
+            borderRadius: 16,
+            minWidth: '72%',
+            borderWidth: 1,
+            borderColor: '#fbbf24'
+          }}
+        >
+          <Text style={{ color: '#0f172a', textAlign: 'center', fontWeight: '900', fontSize: 16 }}>
+            Arm race
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {lapMode && armed && !finished && startTime != null && (
+        <TouchableOpacity
+          onPress={() => {
+            if (finishTriggered.current || startTime == null) return;
+            const total = Date.now() - startTime;
+            const laps = [...lapTimesSecRef.current];
+            const n = laps.length;
+            const label =
+              n === 0
+                ? 'Lap track (session)'
+                : `Lap track (${n} lap${n === 1 ? '' : 's'})`;
+            commitFinish(total, laps, label, avgSpeed, bestSpeed);
+          }}
+          activeOpacity={0.85}
+          style={{
+            position: 'absolute',
+            bottom: 200,
+            alignSelf: 'center',
+            backgroundColor: '#7c3aed',
+            paddingVertical: 16,
+            paddingHorizontal: 28,
+            borderRadius: 16,
+            minWidth: '72%',
+            borderWidth: 1,
+            borderColor: '#c4b5fd'
+          }}
+        >
+          <Text style={{ color: '#faf5ff', textAlign: 'center', fontWeight: '900', fontSize: 16 }}>
+            End run
+          </Text>
+        </TouchableOpacity>
+      )}
 
       
       <View style={{
@@ -384,8 +627,13 @@ export default function Race() {
                 Time: {item.time}s
               </Text>
               <Text style={{color:'#38bdf8',fontSize:12}}>
-                Avg Speed: {item.abgSpeed} km/h
+                Avg Speed: {item.avgSpeed} km/h
               </Text>
+              {item.bestLapSec != null && item.bestLapSec !== '' && (
+                <Text style={{ color: '#c4b5fd', fontSize: 11 }}>
+                  Best lap: {item.bestLapSec}s
+                </Text>
+              )}
             </View>
           )}
         />
@@ -441,6 +689,51 @@ export default function Race() {
     >
       Best Speed: {bestSpeed.toFixed(1)} km/h
     </Text>
+
+    {lapMode && lapTimesSec.length > 0 && (
+      <>
+        <Text
+          style={{
+            color: '#c4b5fd',
+            fontSize: 16,
+            fontWeight: '800',
+            marginTop: 20,
+            alignSelf: 'flex-start',
+            marginLeft: '7%'
+          }}
+        >
+          Lap times
+        </Text>
+        <ScrollView
+          style={{ maxHeight: 200, width: '86%', marginTop: 8 }}
+          showsVerticalScrollIndicator
+        >
+          {lapTimesSec.map((t, i) => (
+            <Text
+              key={`${i}-${t}`}
+              style={{
+                color: '#e2e8f0',
+                paddingVertical: 5,
+                fontSize: 15,
+                borderBottomWidth: 1,
+                borderBottomColor: 'rgba(255,255,255,.06)'
+              }}
+            >
+              Lap {i + 1}: {t.toFixed(2)}s
+            </Text>
+          ))}
+        </ScrollView>
+        <Text style={{ color: '#a78bfa', fontSize: 16, marginTop: 10, fontWeight: '700' }}>
+          Best lap: {Math.min(...lapTimesSec).toFixed(2)}s
+        </Text>
+      </>
+    )}
+
+    {lapMode && lapTimesSec.length === 0 && (
+      <Text style={{ color: '#64748b', marginTop: 16, fontSize: 14 }}>
+        No completed laps (session time only).
+      </Text>
+    )}
   </View>
   
 )}
