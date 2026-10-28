@@ -15,10 +15,10 @@ type MapViewProps = ViewProps & {
 };
 
 type MapModules = {
-  L: typeof import('leaflet').default;
-  RL: typeof import('react-leaflet');
+  L: any;
+  RL: any;
   MapController: React.ComponentType<{
-    mapRef: React.MutableRefObject<import('leaflet').Map | null>;
+    mapRef: React.MutableRefObject<any>;
     initialRegion?: Region;
     onPress?: MapViewProps['onPress'];
   }>;
@@ -34,7 +34,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   { children, initialRegion, onPress, style, showsUserLocation: _showsUserLocation, showsMyLocationButton: _showsMyLocationButton, ...viewProps },
   ref
 ) {
-  const mapRef = useRef<import('leaflet').Map | null>(null);
+  const mapRef = useRef<any>(null);
   const [modules, setModules] = useState<MapModules | null>(null);
   const region = initialRegion ?? {
     latitude: 37.78825,
@@ -55,9 +55,9 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     }
 
     void Promise.all([import('leaflet'), import('react-leaflet')]).then(([leafletModule, RL]) => {
-      const L = leafletModule.default;
+      const L = (leafletModule as any).default ?? leafletModule;
       function MapController({ mapRef: targetRef, initialRegion: firstRegion, onPress: handlePress }: {
-        mapRef: React.MutableRefObject<import('leaflet').Map | null>;
+        mapRef: React.MutableRefObject<any>;
         initialRegion?: Region;
         onPress?: MapViewProps['onPress'];
       }) {
@@ -156,7 +156,7 @@ export function Polyline({
   if (coordinates.length < 2) return null;
   if (!loadedMapModules) return null;
   return React.createElement(loadedMapModules.RL.Polyline, {
-    positions: coordinates.map(({ latitude, longitude }) => [latitude, longitude]),
+    positions: coordinates.map(({ latitude, longitude }) => [latitude, longitude]) as [number, number][],
     pathOptions: { color: strokeColor, weight: strokeWidth }
   });
 }

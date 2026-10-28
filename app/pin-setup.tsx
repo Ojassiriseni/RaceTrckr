@@ -1,8 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -30,6 +30,7 @@ export default function PinSetup() {
   );
   const mapRef = useRef<MapView>(null);
   const didFitUser = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
   const [current, setCurrent] = useState<{
     latitude: number;
     longitude: number;
@@ -178,8 +179,8 @@ export default function PinSetup() {
     pinMode === 'lap' ? Boolean(startCoord) : Boolean(startCoord && endCoord);
 
   useEffect(() => {
-    if (!current || didFitUser.current) return;
-    mapRef.current?.animateToRegion(
+    if (!current || !mapReady || didFitUser.current || !mapRef.current) return;
+    mapRef.current.animateToRegion(
       {
         latitude: current.latitude,
         longitude: current.longitude,
@@ -189,7 +190,7 @@ export default function PinSetup() {
       500
     );
     didFitUser.current = true;
-  }, [current]);
+  }, [current, mapReady]);
 
   const lapLineSet =
     pinMode === 'lap' &&
@@ -206,18 +207,25 @@ export default function PinSetup() {
         : 'Tap the map to place FINISH (red). Or switch back to start below.';
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#090b0f' }}>
       <MapView
         ref={mapRef}
-        style={StyleSheet.absoluteFill}
+        style={{ flex: 1 }}
         mapType="standard"
         showsUserLocation
         showsMyLocationButton={false}
+        loadingEnabled
+        loadingBackgroundColor="#090b0f"
+        loadingIndicatorColor="#c7ff35"
         initialRegion={{
           latitude: current?.latitude ?? 37.78825,
           longitude: current?.longitude ?? -122.4324,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01
+        }}
+        onMapReady={() => {
+          console.log('[RaceTrckr] Place-points map is ready');
+          setMapReady(true);
         }}
         onPress={onMapPress}
       >
@@ -260,14 +268,20 @@ export default function PinSetup() {
       </MapView>
 
       <View style={styles.overlayRoot} pointerEvents="box-none">
-        <View style={styles.topPanel} pointerEvents="auto">
+        <LinearGradient
+          colors={['rgba(9,12,16,0.96)', 'rgba(9,12,16,0.82)', 'rgba(9,12,16,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.topPanel}
+          pointerEvents="auto"
+        >
           {permission === 'denied' && (
-            <Text style={{ color: '#fbbf24', fontSize: 12, marginBottom: 8 }}>
+            <Text style={{ color: '#fbbf24', fontSize: 12, marginBottom: 8, fontWeight: '700', letterSpacing: 0.6 }}>
               {error}
             </Text>
           )}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 20, fontWeight: '800' }}>
+            <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
               Place pins
             </Text>
             <Pressable
@@ -275,11 +289,15 @@ export default function PinSetup() {
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,
                 paddingVertical: 6,
-                paddingHorizontal: 10
+                paddingHorizontal: 10,
+                borderRadius: 999,
+                backgroundColor: 'rgba(199,255,53,0.12)',
+                borderWidth: 1,
+                borderColor: 'rgba(199,255,53,0.4)'
               })}
             >
-              <Text style={{ color: '#38bdf8', fontWeight: '700', fontSize: 13 }}>
-                Race zones →
+              <Text style={{ color: '#c7ff35', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
+                Race zones
               </Text>
             </Pressable>
           </View>
@@ -291,9 +309,9 @@ export default function PinSetup() {
                 flex: 1,
                 paddingVertical: 10,
                 borderRadius: 12,
-                backgroundColor: pinMode === 'segment' ? '#38bdf8' : '#0f172a',
+                backgroundColor: pinMode === 'segment' ? '#c7ff35' : '#0f172a',
                 borderWidth: 1,
-                borderColor: pinMode === 'segment' ? '#7dd3fc' : '#334155'
+                borderColor: pinMode === 'segment' ? '#d5ff78' : '#334155'
               }}
             >
               <Text
@@ -301,10 +319,12 @@ export default function PinSetup() {
                   color: pinMode === 'segment' ? '#0f172a' : '#94a3b8',
                   textAlign: 'center',
                   fontWeight: '800',
-                  fontSize: 13
+                  fontSize: 13,
+                  letterSpacing: 1.1,
+                  textTransform: 'uppercase'
                 }}
               >
-                A → B
+                A to B
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -313,7 +333,7 @@ export default function PinSetup() {
                 flex: 1,
                 paddingVertical: 10,
                 borderRadius: 12,
-                backgroundColor: pinMode === 'lap' ? '#a855f7' : '#0f172a',
+                backgroundColor: pinMode === 'lap' ? '#a78bfa' : '#0f172a',
                 borderWidth: 1,
                 borderColor: pinMode === 'lap' ? '#c084fc' : '#334155'
               }}
@@ -323,10 +343,12 @@ export default function PinSetup() {
                   color: pinMode === 'lap' ? '#0f172a' : '#94a3b8',
                   textAlign: 'center',
                   fontWeight: '800',
-                  fontSize: 13
+                  fontSize: 13,
+                  letterSpacing: 1.1,
+                  textTransform: 'uppercase'
                 }}
               >
-                Lap track
+                Lap line
               </Text>
             </TouchableOpacity>
           </View>
@@ -334,17 +356,17 @@ export default function PinSetup() {
           <View
             style={{
               marginTop: 12,
-              backgroundColor: 'rgba(15,23,42,0.95)',
+              backgroundColor: 'rgba(15,23,42,0.92)',
               borderRadius: 12,
               padding: 12,
               borderWidth: 1,
               borderColor: '#334155'
             }}
           >
-            <Text style={{ color: '#fbbf24', fontWeight: '800', fontSize: 13, marginBottom: 6 }}>
+            <Text style={{ color: '#fbbf24', fontWeight: '800', fontSize: 12, marginBottom: 6, letterSpacing: 1.1, textTransform: 'uppercase' }}>
               Tap the map to drop pins
             </Text>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, lineHeight: 19 }}>{placementHint}</Text>
+            <Text style={{ color: '#dfe7f1', fontSize: 13, lineHeight: 19 }}>{placementHint}</Text>
           </View>
 
           {pinMode === 'segment' && (
@@ -355,7 +377,7 @@ export default function PinSetup() {
                   flex: 1,
                   paddingVertical: 8,
                   borderRadius: 10,
-                  backgroundColor: segmentTarget === 'start' ? '#166534' : '#0f172a',
+                  backgroundColor: segmentTarget === 'start' ? '#14532d' : '#0f172a',
                   borderWidth: 1,
                   borderColor: segmentTarget === 'start' ? '#22c55e' : '#334155'
                 }}
@@ -365,7 +387,9 @@ export default function PinSetup() {
                     color: segmentTarget === 'start' ? '#fff' : '#94a3b8',
                     textAlign: 'center',
                     fontWeight: '800',
-                    fontSize: 12
+                    fontSize: 12,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase'
                   }}
                 >
                   Placing: Start
@@ -377,7 +401,7 @@ export default function PinSetup() {
                   flex: 1,
                   paddingVertical: 8,
                   borderRadius: 10,
-                  backgroundColor: segmentTarget === 'finish' ? '#991b1b' : '#0f172a',
+                  backgroundColor: segmentTarget === 'finish' ? '#7f1d1d' : '#0f172a',
                   borderWidth: 1,
                   borderColor: segmentTarget === 'finish' ? '#f87171' : '#334155'
                 }}
@@ -387,7 +411,9 @@ export default function PinSetup() {
                     color: segmentTarget === 'finish' ? '#fff' : '#94a3b8',
                     textAlign: 'center',
                     fontWeight: '800',
-                    fontSize: 12
+                    fontSize: 12,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase'
                   }}
                 >
                   Placing: Finish
@@ -395,12 +421,18 @@ export default function PinSetup() {
               </TouchableOpacity>
             </View>
           )}
-        </View>
+        </LinearGradient>
 
         <View style={{ flex: 1 }} pointerEvents="box-none" />
 
-        <View style={styles.bottomPanel} pointerEvents="auto">
-          <Text style={{ color: '#64748b', fontSize: 11, marginBottom: 8, textAlign: 'center' }}>
+        <LinearGradient
+          colors={['rgba(9,12,16,0)', 'rgba(9,12,16,0.82)', 'rgba(9,12,16,0.98)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.bottomPanel}
+          pointerEvents="auto"
+        >
+          <Text style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase' }}>
             Optional: use GPS at your feet instead of a map tap
           </Text>
           {pinMode === 'segment' ? (
@@ -416,8 +448,8 @@ export default function PinSetup() {
                   borderColor: '#22c55e'
                 }}
               >
-                <Text style={{ color: '#dcfce7', textAlign: 'center', fontWeight: '800', fontSize: 12 }}>
-                  GPS → Start
+                <Text style={{ color: '#dcfce7', textAlign: 'center', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
+                  GPS → start
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -431,8 +463,8 @@ export default function PinSetup() {
                   borderColor: '#f87171'
                 }}
               >
-                <Text style={{ color: '#fee2e2', textAlign: 'center', fontWeight: '800', fontSize: 12 }}>
-                  GPS → Finish
+                <Text style={{ color: '#fee2e2', textAlign: 'center', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
+                  GPS → finish
                 </Text>
               </TouchableOpacity>
             </View>
@@ -447,8 +479,8 @@ export default function PinSetup() {
                 borderColor: '#c084fc'
               }}
             >
-              <Text style={{ color: '#faf5ff', textAlign: 'center', fontWeight: '800' }}>
-                GPS → Lap line
+              <Text style={{ color: '#faf5ff', textAlign: 'center', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                GPS → lap line
               </Text>
             </TouchableOpacity>
           )}
@@ -457,17 +489,19 @@ export default function PinSetup() {
             onPress={goPreview}
             disabled={!canPreview}
             style={{
-              backgroundColor: canPreview ? '#38bdf8' : 'rgba(56,189,248,0.35)',
+              backgroundColor: canPreview ? '#c7ff35' : 'rgba(199,255,53,0.35)',
               paddingVertical: 16,
               borderRadius: 14,
-              marginTop: 12
+              marginTop: 12,
+              borderWidth: 1,
+              borderColor: canPreview ? '#e8ff9c' : 'rgba(199,255,53,0.4)'
             }}
           >
-            <Text style={{ color: '#0f172a', textAlign: 'center', fontWeight: '900' }}>
+            <Text style={{ color: '#0f172a', textAlign: 'center', fontWeight: '900', letterSpacing: 1.6, textTransform: 'uppercase' }}>
               Preview route
             </Text>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
       </View>
     </View>
   );
@@ -488,14 +522,18 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 56,
     backgroundColor: 'rgba(5,8,22,0.92)',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)'
   },
   bottomPanel: {
     padding: 16,
     paddingBottom: 32,
     backgroundColor: 'rgba(5,8,22,0.92)',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)'
   }
 });

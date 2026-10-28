@@ -18,23 +18,29 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <RaceSettingsProvider>
         <AuthProvider>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#090B0F' },
+            }}
+          >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
             <Stack.Screen
               name="race-advanced"
               options={{
                 title: 'Race zones',
-                headerStyle: { backgroundColor: '#050816' },
-                headerTintColor: '#38bdf8',
-                headerTitleStyle: { color: '#fff', fontWeight: '700' as const },
+                headerShown: true,
+                headerStyle: { backgroundColor: '#090B0F' },
+                headerTintColor: '#C7FF35',
+                headerTitleStyle: { color: '#F4F6FA', fontWeight: '700' as const },
                 presentation: 'modal'
               }}
             />
           </Stack>
         </AuthProvider>
       </RaceSettingsProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }
