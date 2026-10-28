@@ -1,6 +1,10 @@
 # RaceTrckr
 RaceTrckr
 
+Former Team: Akshat, Ashmeet, Ojas
+
+Current: Ojas
+
 App:
   It's an app that tracks the time it takes to travel between two points. Users can create routes and track runs using GPS.        While comparing times on leaderboards from different users. 
 
