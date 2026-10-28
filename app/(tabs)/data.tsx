@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/contexts/auth-context';
 import { shareJsonExport } from '@/lib/export-runs';
 import { buildExportPayload, getRuns, type RaceRun } from '@/lib/runs-storage';
+import { theme } from '@/constants/theme';
 
 export default function DataTab() {
   const { user, loading: authLoading } = useAuth();
@@ -56,7 +57,7 @@ export default function DataTab() {
   if (authLoading) {
     return (
       <View style={screen}>
-        <ActivityIndicator color="#38bdf8" size="large" />
+        <ActivityIndicator color={theme.colors.primary} size="large" />
       </View>
     );
   }
@@ -114,7 +115,7 @@ export default function DataTab() {
       </Text>
 
       {loading ? (
-        <ActivityIndicator color="#38bdf8" style={{ marginTop: 24 }} />
+          <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 24 }} />
       ) : (
         <FlatList
           style={{ marginTop: 16, flex: 1 }}
@@ -160,7 +161,7 @@ export default function DataTab() {
   );
 }
 
-const screen = { flex: 1 as const, backgroundColor: '#050816' };
+const screen = { flex: 1 as const, backgroundColor: theme.colors.background };
 const pad = { padding: 20, paddingTop: 56 };
 const title = {
   color: '#fff',
@@ -168,36 +169,36 @@ const title = {
   fontWeight: '800' as const,
   marginBottom: 4
 };
-const sub = { color: '#94a3b8', fontSize: 14, marginBottom: 20 };
-const muted = { color: '#94a3b8', fontSize: 15, lineHeight: 22 };
+const sub = { color: theme.colors.muted, fontSize: 14, marginBottom: 20 };
+const muted = { color: theme.colors.muted, fontSize: 15, lineHeight: 22 };
 const statsRow = { flexDirection: 'row' as const, gap: 12, marginBottom: 16 };
 const statBox = {
   flex: 1,
-  backgroundColor: '#0f172a',
+  backgroundColor: theme.colors.panel,
   borderRadius: 14,
   padding: 14,
   borderWidth: 1,
-  borderColor: '#1e293b'
+  borderColor: theme.colors.border
 };
-const statNum = { color: '#38bdf8', fontSize: 22, fontWeight: '800' as const };
-const statLabel = { color: '#64748b', fontSize: 12, marginTop: 4 };
+const statNum = { color: theme.colors.primary, fontSize: 22, fontWeight: '800' as const };
+const statLabel = { color: theme.colors.muted, fontSize: 12, marginTop: 4 };
 const exportBtn = {
-  backgroundColor: '#38bdf8',
+  backgroundColor: theme.colors.primary,
   paddingVertical: 14,
   borderRadius: 14,
   alignItems: 'center' as const
 };
-const exportBtnText = { color: '#0f172a', fontWeight: '800' as const, fontSize: 16 };
-const hint = { color: '#64748b', fontSize: 12, marginTop: 8 };
+const exportBtnText = { color: theme.colors.ink, fontWeight: '800' as const, fontSize: 16 };
+const hint = { color: theme.colors.muted, fontSize: 12, marginTop: 8 };
 const card = {
-  backgroundColor: '#0f172a',
+  backgroundColor: theme.colors.panel,
   borderRadius: 12,
   padding: 14,
   marginBottom: 10,
   borderWidth: 1,
-  borderColor: '#1e293b'
+  borderColor: theme.colors.border
 };
-const route = { color: '#e2e8f0', fontWeight: '700' as const, marginBottom: 6 };
-const row = { color: '#94a3b8', fontSize: 13 };
-const accent = { color: '#38bdf8' };
-const date = { color: '#475569', fontSize: 11, marginTop: 6 };
+const route = { color: theme.colors.text, fontWeight: '700' as const, marginBottom: 6 };
+const row = { color: theme.colors.muted, fontSize: 13 };
+const accent = { color: theme.colors.primary };
+const date = { color: theme.colors.muted, fontSize: 11, marginTop: 6 };

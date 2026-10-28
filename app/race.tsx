@@ -1,18 +1,15 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
-  FlatList,
-  ScrollView,
   Text,
   TouchableOpacity,
   View
 } from 'react-native';
 import MapView, { Marker, Polyline, Circle } from '../components/map-view';
 
+import { theme } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useRaceSettings } from '@/contexts/race-settings-context';
 import { appendRun } from '@/lib/runs-storage';
@@ -151,7 +148,6 @@ export default function Race() {
   );
 
 
-  const speedAnim = useRef(new Animated.Value(0)).current;
   const prevLoc = useRef<any>(null);
 
   const delay = (ms:number)=> new Promise(r=> setTimeout(r,ms));
@@ -368,11 +364,6 @@ export default function Race() {
             }
           }
 
-          Animated.timing(speedAnim, {
-            toValue: speed,
-            duration: 300,
-            useNativeDriver: false
-          }).start();
         }
       );
     })();
@@ -395,17 +386,40 @@ export default function Race() {
     lapOuterM
   ]);
 
-  const speedWidth = speedAnim.interpolate({
-    inputRange: [0, 140],
-    outputRange: ['0%', '90%']
-  });
+  const displaySpeed = Math.min(170, Math.max(0, avgSpeed * 1.2 || 0));
+  const mapRef = useRef<any>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const mapCenter = startCoord ?? location ?? { latitude: 37.78825, longitude: -122.4324 };
+  const routeLabel = lapMode ? 'Lap session' : `${String(start ?? 'Start')} → ${String(end ?? 'Finish')}`;
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const coordinates = routeCoords.length > 1
+      ? routeCoords
+      : [startCoord, endCoord].filter(Boolean);
+    const hasDistinctPoints = coordinates.length > 1 && coordinates.some(
+      (point, index) => index > 0 && (
+        point.latitude !== coordinates[0].latitude || point.longitude !== coordinates[0].longitude
+      )
+    );
+    if (hasDistinctPoints) {
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 100, right: 48, bottom: 230, left: 48 },
+        animated: true
+      });
+    } else if (coordinates.length > 0) {
+      mapRef.current.animateToRegion({ ...coordinates[0], latitudeDelta: 0.012, longitudeDelta: 0.012 }, 450);
+    } else if (location) {
+      mapRef.current.animateToRegion({ ...location, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 450);
+    }
+  }, [mapReady, routeCoords, startCoord, endCoord]);
 
   if (loadingRoute) {
     return (
-      <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000' }}>
-        <ActivityIndicator color="#38bdf8" size="large" />
-        <Text style={{ color:'white', marginTop:10 }}>
-          {lapMode ? 'Loading lap track…' : 'Loading route...'}
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator color={theme.colors.primary} size="large" />
+        <Text style={{ color: theme.colors.text, marginTop: 12, fontWeight: '700' }}>
+          {lapMode ? 'Loading lap track…' : 'Loading route…'}
         </Text>
       </View>
     );
@@ -413,337 +427,114 @@ export default function Race() {
 
   if (error) {
     return (
-      <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000' }}>
-        <Text style={{ color:'red' }}>{error}</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 28, backgroundColor: theme.colors.background }}>
+        <Text style={{ color: theme.colors.red, fontSize: 17, fontWeight: '800', textAlign: 'center' }}>{error}</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex:1 }}>
-
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <MapView
-        style={{ flex:1 }}
-        initialRegion={{
-          latitude: startCoord?.latitude ?? location?.latitude ?? 37.78825,
-          longitude: startCoord?.longitude ?? location?.longitude ?? -122.4324,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02
-        }}
+        ref={mapRef}
+        style={{ flex: 1 }}
+        initialRegion={{ latitude: mapCenter.latitude, longitude: mapCenter.longitude, latitudeDelta: 0.035, longitudeDelta: 0.035 }}
+        userLocation={location ? { latitude: location.latitude, longitude: location.longitude } : null}
+        showsUserLocation
+        onMapReady={() => setMapReady(true)}
       >
-        <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#38bdf8" />
-        <Polyline coordinates={path} strokeWidth={3} strokeColor="#22c55e" />
-
-        {location && <Marker coordinate={location} />}
-       
-        
-
+        {routeCoords.length > 1 && <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor={theme.colors.primary} />}
+        {path.length > 1 && <Polyline coordinates={path} strokeWidth={4} strokeColor="#42A5F5" />}
         {lapMode && startCoord ? (
           <>
-            <Marker coordinate={startCoord} pinColor="#a855f7" />
-            <Circle
-              center={startCoord}
-              radius={lapInnerM}
-              strokeWidth={2}
-              strokeColor="rgba(168,85,247,.95)"
-              fillColor="rgba(168,85,247,.18)"
-            />
+            <Marker coordinate={startCoord} pinColor={theme.colors.purple} title="Lap line" />
+            <Circle center={startCoord} radius={lapInnerM} strokeWidth={2} strokeColor={theme.colors.purple} fillColor="rgba(167,139,250,0.18)" />
           </>
         ) : (
           <>
-            {startCoord && (
-              <>
-                <Marker coordinate={startCoord} pinColor="green" />
-                <Circle
-                  center={startCoord}
-                  radius={startZoneM}
-                  strokeWidth={2}
-                  strokeColor="rgba(34,197,94,.9)"
-                  fillColor="rgba(34,197,94,.2)"
-                />
-              </>
-            )}
-            {endCoord && (
-              <>
-                <Marker coordinate={endCoord} pinColor="red" />
-                <Circle
-                  center={endCoord}
-                  radius={endZoneM}
-                  strokeWidth={2}
-                  strokeColor="rgba(239,68,68,.9)"
-                  fillColor="rgba(239,68,68,.2)"
-                />
-              </>
-            )}
+            {startCoord && <Marker coordinate={startCoord} pinColor={theme.colors.green} title="Start" />}
+            {endCoord && <Marker coordinate={endCoord} pinColor={theme.colors.red} title="Finish" />}
+            {startCoord && <Circle center={startCoord} radius={startZoneM} strokeWidth={2} strokeColor={theme.colors.green} fillColor="rgba(55,166,107,0.12)" />}
+            {endCoord && <Circle center={endCoord} radius={endZoneM} strokeWidth={2} strokeColor={theme.colors.red} fillColor="rgba(224,82,82,0.12)" />}
           </>
         )}
       </MapView>
 
-      
-      <LinearGradient
-        colors={['#000000cc','transparent']}
-        style={{ position:'absolute', top:0, width:'100%', padding:20 }}
-      >
-        <Text style={{ color:'white', fontSize:28, fontWeight:'900' }}>
-          speed trckr
-        </Text>
-
-        {!armed && pinCoords && (
-          <Text style={{ color: '#fbbf24', marginTop: 6, fontWeight: '700' }}>
-            {lapMode
-              ? 'Tap “Arm race” when ready — leave the purple zone once, then each time you cross it counts (first crossing starts the session).'
-              : 'Tap “Arm race” when you are ready — crossing the green zone starts the clock.'}
-          </Text>
-        )}
-
-        {lapMode && armed && !finished && startTime && (
-          <Text style={{ color: '#c4b5fd', marginTop: 6, fontWeight: '700' }}>
-            Lap {lapTimesSec.length + 1}
-            {lapTimesSec.length > 0
-              ? ` · Last ${lapTimesSec[lapTimesSec.length - 1].toFixed(1)}s`
-              : ''}
-          </Text>
-        )}
-        
-        <Text style={{ color:'#38bdf8' }}>
-          Time: {(elapsedTime/1000).toFixed(1)}s
-        </Text>
-
-        <Text style={{ color:'#38bdf8' }}>
-          Avg: {avgSpeed.toFixed(1)} km/h | Best: {bestSpeed.toFixed(1)} km/h
-        </Text>
-      </LinearGradient>
-
-      {!armed && pinCoords && !finished && (
-        <TouchableOpacity
-          onPress={() => {
-            if (lapMode) resetLapTracking();
-            setArmed(true);
-          }}
-          activeOpacity={0.85}
-          style={{
-            position: 'absolute',
-            bottom: 200,
-            alignSelf: 'center',
-            backgroundColor: '#f59e0b',
-            paddingVertical: 16,
-            paddingHorizontal: 28,
-            borderRadius: 16,
-            minWidth: '72%',
-            borderWidth: 1,
-            borderColor: '#fbbf24'
-          }}
-        >
-          <Text style={{ color: '#0f172a', textAlign: 'center', fontWeight: '900', fontSize: 16 }}>
-            Arm race
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {lapMode && armed && !finished && startTime != null && (
-        <TouchableOpacity
-          onPress={() => {
-            if (finishTriggered.current || startTime == null) return;
-            const total = Date.now() - startTime;
-            const laps = [...lapTimesSecRef.current];
-            const n = laps.length;
-            const label =
-              n === 0
-                ? 'Lap track (session)'
-                : `Lap track (${n} lap${n === 1 ? '' : 's'})`;
-            commitFinish(total, laps, label, avgSpeed, bestSpeed);
-          }}
-          activeOpacity={0.85}
-          style={{
-            position: 'absolute',
-            bottom: 200,
-            alignSelf: 'center',
-            backgroundColor: '#7c3aed',
-            paddingVertical: 16,
-            paddingHorizontal: 28,
-            borderRadius: 16,
-            minWidth: '72%',
-            borderWidth: 1,
-            borderColor: '#c4b5fd'
-          }}
-        >
-          <Text style={{ color: '#faf5ff', textAlign: 'center', fontWeight: '900', fontSize: 16 }}>
-            End run
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      
-      <View style={{
-        position:'absolute',
-        bottom:100,
-        width:'100%',
-        alignItems:'center'
-      }}>
-        <View style={{
-          width:'85%',
-          height:16,
-          backgroundColor:'#111827',
-          borderRadius:20,
-          overflow:'hidden'
-        }}>
-          <Animated.View style={{
-            height:'100%',
-            width:speedWidth,
-            backgroundColor:'#38bdf8'
-          }} />
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between', paddingTop: 56, paddingBottom: 22, paddingHorizontal: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(7,12,17,0.9)', borderColor: theme.colors.border, borderWidth: 1, borderRadius: 18, padding: 14 }}>
+          <View style={{ flex: 1, paddingRight: 10 }}>
+            <Text style={{ color: theme.colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1.6, textTransform: 'uppercase' }}>{lapMode ? 'Lap mode' : 'Sprint mode'}</Text>
+            <Text numberOfLines={1} style={{ color: theme.colors.text, fontSize: 16, fontWeight: '800', marginTop: 4 }}>{routeLabel}</Text>
+          </View>
+          <TouchableOpacity
+            accessibilityLabel="Recenter map"
+            onPress={() => {
+              const center = location ?? startCoord;
+              if (center) mapRef.current?.animateToRegion({ ...center, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 450);
+            }}
+            style={{ backgroundColor: theme.colors.panelSoft, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11 }}
+          >
+            <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '800' }}>CENTER</Text>
+          </TouchableOpacity>
         </View>
 
-        <Text style={{ color:'white', marginTop:10 }}>
-          Current Speed
-        </Text>
-      </View>
-
-      
-      <View style={{
-        position:'absolute',
-        right:10,
-        top:120,
-        width:160,
-        backgroundColor:'rgba(15,23,42,0.6)',
-        borderRadius:16,
-        borderWidth:1,
-        borderColor:'rgba(255,255,255,.08)',
-        padding:10,
-      }}>
-        <Text style={{ color:'white', fontWeight:'bold', marginBottom:6 }}>
-          Leaderboard
-        </Text>
-
-        <FlatList
-          data={leaderboardStore.get()}
-          keyExtractor={(_, i) => i.toString()}
-          renderItem={({ item, index }) => (
-            <View style={{marginBottom:8}}>
-              <Text
-                style={{
-                  color:'#ffffff',
-                  fontSize:12,
-                  fontWeight:'700'
-                }}
-                numberOfLines={1}
-              >
-                #{index+1} {item.route}
-              </Text>
-              <Text style={{color:'#38bdf8',fontSize:12}}>
-                Time: {item.time}s
-              </Text>
-              <Text style={{color:'#38bdf8',fontSize:12}}>
-                Avg Speed: {item.avgSpeed} km/h
-              </Text>
-              {item.bestLapSec != null && item.bestLapSec !== '' && (
-                <Text style={{ color: '#c4b5fd', fontSize: 11 }}>
-                  Best lap: {item.bestLapSec}s
-                </Text>
-              )}
+        <View pointerEvents="auto" style={{ backgroundColor: 'rgba(7,12,17,0.94)', borderColor: theme.colors.border, borderWidth: 1, borderRadius: 24, padding: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 }}>
+            <View>
+              <Text style={{ color: theme.colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>Live speed</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 2 }}>
+                <Text style={{ color: theme.colors.text, fontSize: 48, fontWeight: '900', letterSpacing: -2 }}>{Math.round(displaySpeed)}</Text>
+                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '800', marginLeft: 7 }}>KM/H</Text>
+              </View>
             </View>
+            <View style={{ alignItems: 'flex-end', paddingBottom: 7 }}>
+              <Text style={{ color: theme.colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.2 }}>ELAPSED</Text>
+              <Text style={{ color: theme.colors.primary, fontSize: 19, fontWeight: '800', fontVariant: ['tabular-nums'], marginTop: 4 }}>{((finished ? finalTime : elapsedTime) / 1000).toFixed(1)}s</Text>
+            </View>
+          </View>
+
+          <View style={{ height: 5, borderRadius: 999, backgroundColor: '#25313D', overflow: 'hidden', marginBottom: 16 }}>
+            <View style={{ width: `${Math.min(90, (displaySpeed / 170) * 90)}%`, height: '100%', backgroundColor: theme.colors.primary, borderRadius: 999 }} />
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+            {[{ label: 'Average', value: `${avgSpeed.toFixed(1)} km/h` }, { label: 'Top speed', value: `${bestSpeed.toFixed(1)} km/h` }, ...(lapMode ? [{ label: 'Laps', value: String(lapTimesSec.length) }] : [])].map((stat) => (
+              <View key={stat.label} style={{ flex: 1, backgroundColor: theme.colors.panel, borderRadius: 14, borderWidth: 1, borderColor: theme.colors.border, padding: 11 }}>
+                <Text style={{ color: theme.colors.muted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 }}>{stat.label}</Text>
+                <Text numberOfLines={1} style={{ color: theme.colors.text, fontSize: 13, fontWeight: '800', marginTop: 6 }}>{stat.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          {lapMode && lapTimesSec.length > 0 && (
+            <Text style={{ color: theme.colors.muted, fontSize: 12, marginBottom: 14 }}>Last lap {lapTimesSec[lapTimesSec.length - 1].toFixed(2)}s · Best lap {Math.min(...lapTimesSec).toFixed(2)}s</Text>
           )}
-        />
-        
+
+          {!armed && pinCoords && !finished ? (
+            <TouchableOpacity onPress={() => { if (lapMode) resetLapTracking(); setArmed(true); }} activeOpacity={0.85} style={{ backgroundColor: theme.colors.primary, borderRadius: 15, paddingVertical: 16, alignItems: 'center' }}>
+              <Text style={{ color: theme.colors.ink, fontWeight: '900', letterSpacing: 1.1 }}>ARM RUN</Text>
+            </TouchableOpacity>
+          ) : lapMode && armed && !finished && startTime != null ? (
+            <TouchableOpacity onPress={() => {
+              if (finishTriggered.current || startTime == null) return;
+              const total = Date.now() - startTime;
+              const laps = [...lapTimesSecRef.current];
+              const label = laps.length === 0 ? 'Lap track (session)' : `Lap track (${laps.length} lap${laps.length === 1 ? '' : 's'})`;
+              commitFinish(total, laps, label, avgSpeed, bestSpeed);
+            }} activeOpacity={0.85} style={{ backgroundColor: theme.colors.purple, borderRadius: 15, paddingVertical: 16, alignItems: 'center' }}>
+              <Text style={{ color: '#130D1B', fontWeight: '900', letterSpacing: 1.1 }}>END RUN</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
+
       {finished && (
-  <View
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.92)',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}
-  >
-    <Text
-      style={{
-        color: 'white',
-        fontSize: 42,
-        fontWeight: '900'
-      }}
-    >
-      FINISHED
-    </Text>
-
-    <Text
-      style={{
-        color: '#38bdf8',
-        fontSize: 20,
-        marginTop: 15
-      }}
-    >
-      Final Time: {(finalTime / 1000).toFixed(1)}s
-    </Text>
-
-    <Text
-      style={{
-        color: '#94a3b8',
-        marginTop: 8
-      }}
-    >
-      Avg Speed: {avgSpeed.toFixed(1)} km/h
-    </Text>
-
-    <Text
-      style={{
-        color: '#94a3b8',
-        marginTop: 5
-      }}
-    >
-      Best Speed: {bestSpeed.toFixed(1)} km/h
-    </Text>
-
-    {lapMode && lapTimesSec.length > 0 && (
-      <>
-        <Text
-          style={{
-            color: '#c4b5fd',
-            fontSize: 16,
-            fontWeight: '800',
-            marginTop: 20,
-            alignSelf: 'flex-start',
-            marginLeft: '7%'
-          }}
-        >
-          Lap times
-        </Text>
-        <ScrollView
-          style={{ maxHeight: 200, width: '86%', marginTop: 8 }}
-          showsVerticalScrollIndicator
-        >
-          {lapTimesSec.map((t, i) => (
-            <Text
-              key={`${i}-${t}`}
-              style={{
-                color: '#e2e8f0',
-                paddingVertical: 5,
-                fontSize: 15,
-                borderBottomWidth: 1,
-                borderBottomColor: 'rgba(255,255,255,.06)'
-              }}
-            >
-              Lap {i + 1}: {t.toFixed(2)}s
-            </Text>
-          ))}
-        </ScrollView>
-        <Text style={{ color: '#a78bfa', fontSize: 16, marginTop: 10, fontWeight: '700' }}>
-          Best lap: {Math.min(...lapTimesSec).toFixed(2)}s
-        </Text>
-      </>
-    )}
-
-    {lapMode && lapTimesSec.length === 0 && (
-      <Text style={{ color: '#64748b', marginTop: 16, fontSize: 14 }}>
-        No completed laps (session time only).
-      </Text>
-    )}
-  </View>
-  
-)}
-</View>
+        <View style={{ position: 'absolute', left: 18, right: 18, top: '35%', backgroundColor: '#0A1118', borderColor: theme.colors.primary, borderWidth: 1, borderRadius: 22, padding: 24, alignItems: 'center' }}>
+          <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 2 }}>RUN COMPLETE</Text>
+          <Text style={{ color: theme.colors.text, fontSize: 38, fontWeight: '900', marginTop: 8 }}>{(finalTime / 1000).toFixed(1)}s</Text>
+          <Text style={{ color: theme.colors.muted, marginTop: 8 }}>Avg {avgSpeed.toFixed(1)} km/h · Best {bestSpeed.toFixed(1)} km/h</Text>
+        </View>
+      )}
+    </View>
   );
 }

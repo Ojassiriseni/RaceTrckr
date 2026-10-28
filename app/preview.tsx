@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from '../components/map-view';
 
@@ -58,6 +58,8 @@ export default function Preview() {
   const params = useLocalSearchParams();
   const { start, end } = params;
   const { settings } = useRaceSettings();
+  const mapRef = useRef<any>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   const lapMode = useMemo(
     () => isLapParam(params as Record<string, string | string[] | undefined>),
@@ -200,11 +202,33 @@ export default function Preview() {
 
   const region = startCoord ?? { latitude: 37.78825, longitude: -122.4324 };
 
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const points = routeCoords.length > 1
+      ? routeCoords
+      : [startCoord, endCoord].filter(Boolean);
+    const hasDistinctPoints = points.length > 1 && points.some(
+      (point, index) => index > 0 && (
+        point.latitude !== points[0].latitude || point.longitude !== points[0].longitude
+      )
+    );
+    if (hasDistinctPoints) {
+      mapRef.current.fitToCoordinates(points, {
+        edgePadding: { top: 72, right: 48, bottom: 300, left: 48 },
+        animated: true
+      });
+    } else if (points.length > 0) {
+      mapRef.current.animateToRegion({ ...points[0], latitudeDelta: 0.008, longitudeDelta: 0.008 }, 450);
+    }
+  }, [mapReady, routeCoords, startCoord, endCoord]);
+
   return (
     <View style={styles.screen}>
       <MapView
+        ref={mapRef}
         key={`${startCoord?.latitude ?? 'default'}:${startCoord?.longitude ?? 'default'}`}
         style={styles.map}
+        onMapReady={() => setMapReady(true)}
         initialRegion={{
           latitude: region.latitude,
           longitude: region.longitude,

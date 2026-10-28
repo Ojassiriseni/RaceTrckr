@@ -2,18 +2,22 @@ import { Platform } from 'react-native';
 
 export const theme = {
   colors: {
-    background: '#090B0F',
-    surface: '#12161D',
-    surfaceAlt: '#191F28',
-    border: '#262D38',
+    background: '#060B12',
+    surface: '#101922',
+    surfaceAlt: '#161F2A',
+    border: '#263447',
     primary: '#C7FF35',
     purple: '#A78BFA',
     red: '#E05252',
     orange: '#E99A35',
     green: '#37A66B',
     text: '#F4F6FA',
-    muted: '#929BAA',
+    muted: '#8A97AA',
     shadow: '#000000',
+    panel: '#0E1721',
+    panelSoft: '#111C27',
+    line: '#243244',
+    ink: '#071018',
   },
   spacing: {
     xs: 8,

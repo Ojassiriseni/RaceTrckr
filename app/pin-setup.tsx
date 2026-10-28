@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import MapView, { Circle, Marker, Polyline } from '../components/map-view';
+import MapView, { Circle, Marker } from '../components/map-view';
 
+import { theme } from '@/constants/theme';
 import { useRaceSettings } from '@/contexts/race-settings-context';
 
 type PinMode = 'segment' | 'lap';
@@ -28,7 +29,7 @@ export default function PinSetup() {
   const [permission, setPermission] = useState<'unknown' | 'granted' | 'denied'>(
     'unknown'
   );
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const didFitUser = useRef(false);
   const [mapReady, setMapReady] = useState(false);
   const [current, setCurrent] = useState<{
@@ -44,12 +45,6 @@ export default function PinSetup() {
     longitude: number;
   } | null>(null);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    setStartCoord(null);
-    setEndCoord(null);
-    setSegmentTarget('start');
-  }, [pinMode]);
 
   useEffect(() => {
     let sub: Location.LocationSubscription | undefined;
@@ -192,6 +187,18 @@ export default function PinSetup() {
     didFitUser.current = true;
   }, [current, mapReady]);
 
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !startCoord || !endCoord) return;
+    if (startCoord.latitude === endCoord.latitude && startCoord.longitude === endCoord.longitude) {
+      mapRef.current.animateToRegion({ ...startCoord, latitudeDelta: 0.008, longitudeDelta: 0.008 }, 450);
+    } else {
+      mapRef.current.fitToCoordinates([startCoord, endCoord], {
+        edgePadding: { top: 220, right: 56, bottom: 250, left: 56 },
+        animated: true
+      });
+    }
+  }, [startCoord, endCoord, mapReady]);
+
   const lapLineSet =
     pinMode === 'lap' &&
     startCoord &&
@@ -214,6 +221,7 @@ export default function PinSetup() {
         mapType="standard"
         showsUserLocation
         showsMyLocationButton={false}
+        userLocation={current}
         loadingEnabled
         loadingBackgroundColor="#090b0f"
         loadingIndicatorColor="#c7ff35"
@@ -269,154 +277,82 @@ export default function PinSetup() {
 
       <View style={styles.overlayRoot} pointerEvents="box-none">
         <LinearGradient
-          colors={['rgba(9,12,16,0.96)', 'rgba(9,12,16,0.82)', 'rgba(9,12,16,0)']}
+          colors={['rgba(8,11,17,0.96)', 'rgba(8,11,17,0.82)', 'rgba(8,11,17,0)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.topPanel}
           pointerEvents="auto"
         >
           {permission === 'denied' && (
-            <Text style={{ color: '#fbbf24', fontSize: 12, marginBottom: 8, fontWeight: '700', letterSpacing: 0.6 }}>
-              {error}
-            </Text>
+            <Text style={styles.warningText}>{error}</Text>
           )}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-              Place pins
-            </Text>
+
+          <View style={styles.topRow}>
+            <View>
+              <Text style={styles.kicker}>Route setup</Text>
+              <Text style={styles.title}>Arm screen</Text>
+            </View>
+
             <Pressable
               onPress={() => router.push('/race-advanced')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-                paddingVertical: 6,
-                paddingHorizontal: 10,
-                borderRadius: 999,
-                backgroundColor: 'rgba(199,255,53,0.12)',
-                borderWidth: 1,
-                borderColor: 'rgba(199,255,53,0.4)'
-              })}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }, styles.zoneButton]}
             >
-              <Text style={{ color: '#c7ff35', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
-                Race zones
-              </Text>
+              <Text style={styles.zoneButtonText}>Race zones</Text>
             </Pressable>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <View style={styles.modeRow}>
             <TouchableOpacity
-              onPress={() => setPinMode('segment')}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                borderRadius: 12,
-                backgroundColor: pinMode === 'segment' ? '#c7ff35' : '#0f172a',
-                borderWidth: 1,
-                borderColor: pinMode === 'segment' ? '#d5ff78' : '#334155'
+              onPress={() => {
+                setStartCoord(null);
+                setEndCoord(null);
+                setSegmentTarget('start');
+                setPinMode('segment');
               }}
+              style={[styles.modeButton, pinMode === 'segment' && styles.modeButtonActive]}
             >
-              <Text
-                style={{
-                  color: pinMode === 'segment' ? '#0f172a' : '#94a3b8',
-                  textAlign: 'center',
-                  fontWeight: '800',
-                  fontSize: 13,
-                  letterSpacing: 1.1,
-                  textTransform: 'uppercase'
-                }}
-              >
-                A to B
+              <Text style={[styles.modeButtonText, pinMode === 'segment' && styles.modeButtonTextActive]}>
+                A → B
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              onPress={() => setPinMode('lap')}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                borderRadius: 12,
-                backgroundColor: pinMode === 'lap' ? '#a78bfa' : '#0f172a',
-                borderWidth: 1,
-                borderColor: pinMode === 'lap' ? '#c084fc' : '#334155'
+              onPress={() => {
+                setStartCoord(null);
+                setEndCoord(null);
+                setSegmentTarget('start');
+                setPinMode('lap');
               }}
+              style={[styles.modeButton, pinMode === 'lap' && styles.lapModeButtonActive]}
             >
-              <Text
-                style={{
-                  color: pinMode === 'lap' ? '#0f172a' : '#94a3b8',
-                  textAlign: 'center',
-                  fontWeight: '800',
-                  fontSize: 13,
-                  letterSpacing: 1.1,
-                  textTransform: 'uppercase'
-                }}
-              >
+              <Text style={[styles.modeButtonText, pinMode === 'lap' && styles.lapModeButtonTextActive]}>
                 Lap line
               </Text>
             </TouchableOpacity>
           </View>
 
-          <View
-            style={{
-              marginTop: 12,
-              backgroundColor: 'rgba(15,23,42,0.92)',
-              borderRadius: 12,
-              padding: 12,
-              borderWidth: 1,
-              borderColor: '#334155'
-            }}
-          >
-            <Text style={{ color: '#fbbf24', fontWeight: '800', fontSize: 12, marginBottom: 6, letterSpacing: 1.1, textTransform: 'uppercase' }}>
-              Tap the map to drop pins
-            </Text>
-            <Text style={{ color: '#dfe7f1', fontSize: 13, lineHeight: 19 }}>{placementHint}</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.cardLabel}>Map target</Text>
+            <Text style={styles.cardText}>{placementHint}</Text>
           </View>
 
           {pinMode === 'segment' && (
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <View style={styles.segmentRow}>
               <TouchableOpacity
                 onPress={() => setSegmentTarget('start')}
-                style={{
-                  flex: 1,
-                  paddingVertical: 8,
-                  borderRadius: 10,
-                  backgroundColor: segmentTarget === 'start' ? '#14532d' : '#0f172a',
-                  borderWidth: 1,
-                  borderColor: segmentTarget === 'start' ? '#22c55e' : '#334155'
-                }}
+                style={[styles.segmentTarget, segmentTarget === 'start' && styles.startTargetActive]}
               >
-                <Text
-                  style={{
-                    color: segmentTarget === 'start' ? '#fff' : '#94a3b8',
-                    textAlign: 'center',
-                    fontWeight: '800',
-                    fontSize: 12,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  Placing: Start
+                <Text style={[styles.segmentTargetText, segmentTarget === 'start' && styles.segmentTargetTextActive]}>
+                  Start pin
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => setSegmentTarget('finish')}
-                style={{
-                  flex: 1,
-                  paddingVertical: 8,
-                  borderRadius: 10,
-                  backgroundColor: segmentTarget === 'finish' ? '#7f1d1d' : '#0f172a',
-                  borderWidth: 1,
-                  borderColor: segmentTarget === 'finish' ? '#f87171' : '#334155'
-                }}
+                style={[styles.segmentTarget, segmentTarget === 'finish' && styles.finishTargetActive]}
               >
-                <Text
-                  style={{
-                    color: segmentTarget === 'finish' ? '#fff' : '#94a3b8',
-                    textAlign: 'center',
-                    fontWeight: '800',
-                    fontSize: 12,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  Placing: Finish
+                <Text style={[styles.segmentTargetText, segmentTarget === 'finish' && styles.segmentTargetTextActive]}>
+                  Finish pin
                 </Text>
               </TouchableOpacity>
             </View>
@@ -426,80 +362,36 @@ export default function PinSetup() {
         <View style={{ flex: 1 }} pointerEvents="box-none" />
 
         <LinearGradient
-          colors={['rgba(9,12,16,0)', 'rgba(9,12,16,0.82)', 'rgba(9,12,16,0.98)']}
+          colors={['rgba(8,11,17,0)', 'rgba(8,11,17,0.82)', 'rgba(8,11,17,0.98)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.bottomPanel}
           pointerEvents="auto"
         >
-          <Text style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            Optional: use GPS at your feet instead of a map tap
-          </Text>
+          <Text style={styles.helperText}>Use your GPS or tap the map to set the route</Text>
+
           {pinMode === 'segment' ? (
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity
-                onPress={setStartHere}
-                style={{
-                  flex: 1,
-                  backgroundColor: '#14532d',
-                  paddingVertical: 12,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: '#22c55e'
-                }}
-              >
-                <Text style={{ color: '#dcfce7', textAlign: 'center', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
-                  GPS → start
-                </Text>
+            <View style={styles.gpsRow}>
+              <TouchableOpacity onPress={setStartHere} style={[styles.gpsButton, styles.startButton]}>
+                <Text style={styles.gpsButtonText}>GPS → start</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={setFinishHere}
-                style={{
-                  flex: 1,
-                  backgroundColor: '#7f1d1d',
-                  paddingVertical: 12,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: '#f87171'
-                }}
-              >
-                <Text style={{ color: '#fee2e2', textAlign: 'center', fontWeight: '800', fontSize: 12, letterSpacing: 1.1, textTransform: 'uppercase' }}>
-                  GPS → finish
-                </Text>
+
+              <TouchableOpacity onPress={setFinishHere} style={[styles.gpsButton, styles.finishButton]}>
+                <Text style={styles.gpsButtonText}>GPS → finish</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
-              onPress={setLapLineHere}
-              style={{
-                backgroundColor: '#5b21b6',
-                paddingVertical: 14,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: '#c084fc'
-              }}
-            >
-              <Text style={{ color: '#faf5ff', textAlign: 'center', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-                GPS → lap line
-              </Text>
+            <TouchableOpacity onPress={setLapLineHere} style={[styles.gpsButton, styles.lapButton]}>
+              <Text style={styles.gpsButtonText}>GPS → lap line</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             onPress={goPreview}
             disabled={!canPreview}
-            style={{
-              backgroundColor: canPreview ? '#c7ff35' : 'rgba(199,255,53,0.35)',
-              paddingVertical: 16,
-              borderRadius: 14,
-              marginTop: 12,
-              borderWidth: 1,
-              borderColor: canPreview ? '#e8ff9c' : 'rgba(199,255,53,0.4)'
-            }}
+            style={[styles.previewButton, !canPreview && styles.previewButtonDisabled]}
           >
-            <Text style={{ color: '#0f172a', textAlign: 'center', fontWeight: '900', letterSpacing: 1.6, textTransform: 'uppercase' }}>
-              Preview route
-            </Text>
+            <Text style={styles.previewButtonText}>Preview route</Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>
@@ -519,21 +411,210 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   topPanel: {
-    padding: 16,
-    paddingTop: 56,
-    backgroundColor: 'rgba(5,8,22,0.92)',
+    paddingHorizontal: 16,
+    paddingTop: 54,
+    paddingBottom: 14,
+    backgroundColor: 'rgba(10,14,18,0.9)',
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)'
   },
   bottomPanel: {
-    padding: 16,
-    paddingBottom: 32,
-    backgroundColor: 'rgba(5,8,22,0.92)',
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+    paddingTop: 16,
+    backgroundColor: 'rgba(10,14,18,0.92)',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)'
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between'
+  },
+  kicker: {
+    color: theme.colors.primary,
+    fontSize: 10,
+    letterSpacing: 1.7,
+    textTransform: 'uppercase',
+    fontWeight: '700'
+  },
+  title: {
+    color: '#f4f7fb',
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.8,
+    marginTop: 4
+  },
+  zoneButton: {
+    backgroundColor: 'rgba(199, 255, 53, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(199, 255, 53, 0.3)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  zoneButtonText: {
+    color: theme.colors.primary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase'
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14
+  },
+  modeButton: {
+    flex: 1,
+    backgroundColor: 'rgba(23,29,38,0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.22)',
+    borderRadius: 12,
+    paddingVertical: 10
+  },
+  modeButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary
+  },
+  lapModeButtonActive: {
+    backgroundColor: '#a78bfa',
+    borderColor: '#d9c7ff'
+  },
+  modeButtonText: {
+    color: '#dfe7f1',
+    textAlign: 'center',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase'
+  },
+  modeButtonTextActive: {
+    color: '#08131b'
+  },
+  lapModeButtonTextActive: {
+    color: '#130d1b'
+  },
+  infoCard: {
+    marginTop: 12,
+    backgroundColor: 'rgba(19,25,32,0.86)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.15)',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
+  cardLabel: {
+    color: theme.colors.primary,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    marginBottom: 4
+  },
+  cardText: {
+    color: '#ecf3ff',
+    fontSize: 13,
+    lineHeight: 18
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10
+  },
+  segmentTarget: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: 'rgba(19,25,32,0.9)',
+    borderColor: 'rgba(148,163,184,0.22)'
+  },
+  startTargetActive: {
+    backgroundColor: 'rgba(34,197,94,0.16)',
+    borderColor: 'rgba(74,222,128,0.7)'
+  },
+  finishTargetActive: {
+    backgroundColor: 'rgba(239,68,68,0.16)',
+    borderColor: 'rgba(248,113,113,0.7)'
+  },
+  segmentTargetText: {
+    color: '#dfe7f1',
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase'
+  },
+  segmentTargetTextActive: {
+    color: '#ffffff'
+  },
+  helperText: {
+    color: '#94a3b8',
+    fontSize: 11,
+    textAlign: 'center',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 8
+  },
+  gpsRow: {
+    flexDirection: 'row',
+    gap: 10
+  },
+  gpsButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1
+  },
+  startButton: {
+    backgroundColor: 'rgba(34,197,94,0.14)',
+    borderColor: 'rgba(74,222,128,0.8)'
+  },
+  finishButton: {
+    backgroundColor: 'rgba(239,68,68,0.14)',
+    borderColor: 'rgba(248,113,113,0.8)'
+  },
+  lapButton: {
+    backgroundColor: 'rgba(167,139,250,0.18)',
+    borderColor: 'rgba(216,199,255,0.85)'
+  },
+  gpsButtonText: {
+    color: '#edf7ff',
+    textAlign: 'center',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase'
+  },
+  previewButton: {
+    backgroundColor: '#dfeeff',
+    paddingVertical: 16,
+    borderRadius: 14,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#9bb9ff'
+  },
+  previewButtonDisabled: {
+    backgroundColor: 'rgba(223,238,255,0.38)',
+    borderColor: 'rgba(155,185,255,0.3)'
+  },
+  previewButtonText: {
+    color: '#08131b',
+    textAlign: 'center',
+    fontWeight: '900',
+    letterSpacing: 1.6,
+    textTransform: 'uppercase'
+  },
+  warningText: {
+    color: '#fbbf24',
+    fontSize: 12,
+    marginBottom: 8,
+    fontWeight: '700',
+    letterSpacing: 0.6
   }
 });

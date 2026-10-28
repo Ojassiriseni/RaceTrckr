@@ -4,7 +4,10 @@ import { StyleSheet, View, type ViewProps } from 'react-native';
 type Coordinate = { latitude: number; longitude: number };
 type Region = Coordinate & { latitudeDelta: number; longitudeDelta: number };
 
-type MapViewHandle = { animateToRegion: (region: Region, duration?: number) => void };
+type MapViewHandle = {
+  animateToRegion: (region: Region, duration?: number) => void;
+  fitToCoordinates: (coordinates: Coordinate[], options?: { edgePadding?: { top: number; right: number; bottom: number; left: number }; animated?: boolean }) => void;
+};
 
 type MapViewProps = ViewProps & {
   children?: React.ReactNode;
@@ -12,6 +15,12 @@ type MapViewProps = ViewProps & {
   onPress?: (event: { nativeEvent: { coordinate: Coordinate } }) => void;
   showsUserLocation?: boolean;
   showsMyLocationButton?: boolean;
+  userLocation?: Coordinate | null;
+  onMapReady?: () => void;
+  mapType?: string;
+  loadingEnabled?: boolean;
+  loadingBackgroundColor?: string;
+  loadingIndicatorColor?: string;
 };
 
 type MapModules = {
@@ -21,6 +30,7 @@ type MapModules = {
     mapRef: React.MutableRefObject<any>;
     initialRegion?: Region;
     onPress?: MapViewProps['onPress'];
+    onMapReady?: MapViewProps['onMapReady'];
   }>;
 };
 
@@ -31,7 +41,7 @@ function zoomForRegion(region: Region) {
 }
 
 const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
-  { children, initialRegion, onPress, style, showsUserLocation: _showsUserLocation, showsMyLocationButton: _showsMyLocationButton, ...viewProps },
+  { children, initialRegion, onPress, onMapReady, userLocation, style, showsUserLocation: _showsUserLocation, showsMyLocationButton: _showsMyLocationButton, mapType: _mapType, loadingEnabled: _loadingEnabled, loadingBackgroundColor: _loadingBackgroundColor, loadingIndicatorColor: _loadingIndicatorColor, ...viewProps },
   ref
 ) {
   const mapRef = useRef<any>(null);
@@ -56,13 +66,21 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
 
     void Promise.all([import('leaflet'), import('react-leaflet')]).then(([leafletModule, RL]) => {
       const L = (leafletModule as any).default ?? leafletModule;
-      function MapController({ mapRef: targetRef, initialRegion: firstRegion, onPress: handlePress }: {
+      function MapController({ mapRef: targetRef, initialRegion: firstRegion, onPress: handlePress, onMapReady: handleMapReady }: {
         mapRef: React.MutableRefObject<any>;
         initialRegion?: Region;
         onPress?: MapViewProps['onPress'];
+        onMapReady?: MapViewProps['onMapReady'];
       }) {
         const map = RL.useMap();
         targetRef.current = map;
+        React.useEffect(() => {
+          const timer = setTimeout(() => {
+            map.invalidateSize();
+            handleMapReady?.();
+          }, 0);
+          return () => clearTimeout(timer);
+        }, [map, handleMapReady]);
         React.useEffect(() => {
           if (firstRegion) {
             map.setView([firstRegion.latitude, firstRegion.longitude], zoomForRegion(firstRegion), { animate: false });
@@ -91,6 +109,15 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
         zoomForRegion(nextRegion),
         { duration: duration / 1000 }
       );
+    },
+    fitToCoordinates: (coordinates, options) => {
+      if (coordinates.length < 1) return;
+      const bounds = coordinates.map(({ latitude, longitude }) => [latitude, longitude] as [number, number]);
+      mapRef.current?.fitBounds(bounds, {
+        paddingTopLeft: [options?.edgePadding?.left ?? 24, options?.edgePadding?.top ?? 24],
+        paddingBottomRight: [options?.edgePadding?.right ?? 24, options?.edgePadding?.bottom ?? 24],
+        animate: options?.animated ?? true
+      });
     }
   }), []);
 
@@ -113,7 +140,18 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         }),
-        React.createElement(MapController, { mapRef, initialRegion, onPress }),
+        React.createElement(MapController, { mapRef, initialRegion, onPress, onMapReady }),
+        userLocation && React.createElement(RL.Marker, {
+          position: [userLocation.latitude, userLocation.longitude],
+          icon: modules.L.divIcon({
+            className: 'race-trackr-user-location',
+            html: '<span style="display:block;width:14px;height:14px;border:3px solid white;border-radius:50%;background:#4285f4;box-shadow:0 0 0 7px rgba(66,133,244,.24)"></span>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          }),
+          title: 'Your location',
+          zIndexOffset: 1000
+        }),
         children
       )}
     </View>
