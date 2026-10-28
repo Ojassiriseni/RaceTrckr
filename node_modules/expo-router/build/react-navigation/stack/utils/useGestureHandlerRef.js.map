@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/stack/utils/useGestureHandlerRef.tsx"],"sourcesContent":[null],"names":["useGestureHandlerRef","ref","use","GestureHandlerRefContext","undefined","Error"],"mappings":"AAAA;;;;;+BAKgBA;;;eAAAA;;;;yBAJI;;;;;;0CAEqB;AAElC,SAASA;IACd,MAAMC,MAAMC,IAAAA,YAAG,EAACC,kDAAwB;IAExC,IAAIF,QAAQG,WAAW;QACrB,MAAM,IAAIC,MAAM;IAClB;IAEA,OAAOJ;AACT"}

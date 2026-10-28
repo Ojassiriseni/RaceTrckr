@@ -1,0 +1,14 @@
+export function StatusBar() {
+    return null;
+}
+StatusBar.setStyle = ()=>{};
+StatusBar.setHidden = ()=>{};
+StatusBar.getVerticalBarEdgeIOS = ()=>null;
+StatusBar.setVerticalBarBehaviorIOS = ()=>{};
+export function setStatusBarStyle() {}
+export function setStatusBarHidden() {}
+export function useVerticalBarEdgeIOS() {
+    return null;
+}
+
+//# sourceMappingURL=StatusBar.web.js.map

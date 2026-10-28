@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/theming/useTheme.tsx"],"sourcesContent":[null],"names":["useTheme","theme","use","ThemeContext","Error"],"mappings":"AAAA;;;;;+BAKgBA;;;eAAAA;;;;yBAJI;;;;;;8BAES;AAEtB,SAASA;IACd,MAAMC,QAAQC,IAAAA,YAAG,EAACC,0BAAY;IAE9B,IAAIF,SAAS,MAAM;QACjB,MAAM,IAAIG,MACR;IAEJ;IAEA,OAAOH;AACT"}

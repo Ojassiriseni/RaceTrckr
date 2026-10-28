@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
+import MapView, { Circle, Marker, Polyline } from '../components/map-view';
 
 import { useRaceSettings } from '@/contexts/race-settings-context';
 
@@ -54,35 +54,39 @@ export default function PinSetup() {
     let sub: Location.LocationSubscription | undefined;
 
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setPermission('denied');
-        setError('Location permission is required to drop pins where you stand.');
-        return;
-      }
-      setPermission('granted');
-
       try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setPermission('denied');
+          setError('Location access is off. You can still tap the map to place pins.');
+          return;
+        }
+        setPermission('granted');
+
         const snap = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Highest
         });
         const { latitude, longitude } = snap.coords;
         setCurrent({ latitude, longitude });
       } catch {
-        // watch will populate
+        // The map stays usable for manual placement if GPS is unavailable.
       }
 
-      sub = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 1000,
-          distanceInterval: 5
-        },
-        (loc) => {
-          const { latitude, longitude } = loc.coords;
-          setCurrent({ latitude, longitude });
-        }
-      );
+      try {
+        sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 1000,
+            distanceInterval: 5
+          },
+          (loc) => {
+            const { latitude, longitude } = loc.coords;
+            setCurrent({ latitude, longitude });
+          }
+        );
+      } catch {
+        // GPS is optional; map taps still work without it.
+      }
     })();
 
     return () => sub?.remove();
@@ -187,23 +191,6 @@ export default function PinSetup() {
     didFitUser.current = true;
   }, [current]);
 
-  if (permission === 'unknown') {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color="#38bdf8" size="large" />
-        <Text style={{ color: '#94a3b8', marginTop: 12 }}>Getting location…</Text>
-      </View>
-    );
-  }
-
-  if (permission === 'denied') {
-    return (
-      <View style={[styles.centered, { padding: 24 }]}>
-        <Text style={{ color: '#f87171', textAlign: 'center' }}>{error}</Text>
-      </View>
-    );
-  }
-
   const lapLineSet =
     pinMode === 'lap' &&
     startCoord &&
@@ -222,7 +209,8 @@ export default function PinSetup() {
     <View style={{ flex: 1 }}>
       <MapView
         ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
+        mapType="standard"
         showsUserLocation
         showsMyLocationButton={false}
         initialRegion={{
@@ -273,6 +261,11 @@ export default function PinSetup() {
 
       <View style={styles.overlayRoot} pointerEvents="box-none">
         <View style={styles.topPanel} pointerEvents="auto">
+          {permission === 'denied' && (
+            <Text style={{ color: '#fbbf24', fontSize: 12, marginBottom: 8 }}>
+              {error}
+            </Text>
+          )}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ color: 'white', fontSize: 20, fontWeight: '800' }}>
               Place pins
@@ -488,7 +481,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#050816'
   },
   overlayRoot: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between'
   },
   topPanel: {

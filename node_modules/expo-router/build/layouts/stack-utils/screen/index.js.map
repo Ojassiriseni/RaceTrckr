@@ -1,0 +1,1 @@
+{"version":3,"sources":["layouts/stack-utils/screen/index.tsx"],"sourcesContent":[null],"names":["StackScreenBackButton","StackScreenTitle","appendStackScreenBackButtonPropsToOptions","appendStackScreenTitlePropsToOptions"],"mappings":";;;;;;;;;;;;;;;;;QAOEA;eAAAA,4CAAqB;;QANrBC;eAAAA,kCAAgB;;QAOhBC;eAAAA,gEAAyC;;QANzCC;eAAAA,sDAAoC;;;kCAE/B;uCAMA"}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/useNavigation.tsx"],"sourcesContent":[null],"names":["useNavigation","navigation","use","NavigationContext","undefined","Error"],"mappings":"AAAA;;;;;+BAYgBA;;;eAAAA;;;;yBAXI;;;;;;mCAGc;AAQ3B,SAASA;IAKd,MAAMC,aAAaC,IAAAA,YAAG,EAACC,oCAAiB;IAExC,IAAIF,eAAeG,WAAW;QAC5B,MAAM,IAAIC,MACR;IAEJ;IAEA,OAAOJ;AACT"}

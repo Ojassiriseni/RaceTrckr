@@ -1,0 +1,1 @@
+{"version":3,"sources":["worklets/index.ts"],"sourcesContent":[null],"names":["installOnUIRuntime","uiRuntimeHolder","installOnUIRuntimeNative","globalThis","expo","Error"],"mappings":"AAAA;;;;;;CAMC,GACD,OAAO,SAASA,mBAAmBC,eAAuB;IACxD,MAAMC,2BAA2BC,YAAYC,MAAMJ;IACnD,IAAI,CAACE,0BAA0B;QAC7B,MAAMG,MACJ;IAEJ;IAEAH,yBAAyBD;AAC3B"}

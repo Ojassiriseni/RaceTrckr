@@ -1,0 +1,1 @@
+{"version":3,"sources":["fork/native-stack/composition-options/index.ts"],"sourcesContent":[null],"names":["CompositionContext","mergeOptions","useCompositionOption","useCompositionRegistry"],"mappings":";;;;;;;;;;;;;;;;;QAEEA;eAAAA,6CAAkB;;QAFXC;eAAAA,0BAAY;;QAInBC;eAAAA,+CAAoB;;QADpBC;eAAAA,iDAAsB;;;8BAHK;2CAKtB"}

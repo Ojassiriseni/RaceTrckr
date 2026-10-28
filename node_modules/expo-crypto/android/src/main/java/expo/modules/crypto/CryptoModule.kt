@@ -1,44 +1,37 @@
 package expo.modules.crypto
 
 import android.util.Base64
-import expo.modules.kotlin.modules.Module
-import expo.modules.kotlin.modules.ModuleDefinition
-import expo.modules.kotlin.typedarray.TypedArray
+import io.github.expo.modules.v2.ExpoModule
+import io.github.expo.modules.v2.JS
+import io.github.expo.modules.v2.Module
+import io.github.expo.modules.v2.TypedArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.UUID
+import kotlin.math.min
 
+@ExpoModule("ExpoCrypto")
 class CryptoModule : Module() {
   private val secureRandom by lazy { SecureRandom() }
 
-  override fun definition() = ModuleDefinition {
-    Name("ExpoCrypto")
+  @JS
+  fun digestString(
+    algorithm: DigestAlgorithm,
+    data: String,
+    options: DigestOptions
+  ): String {
+    val messageDigest = MessageDigest
+      .getInstance(algorithm.value)
+      .apply { update(data.toByteArray()) }
 
-    Function("digestString", this@CryptoModule::digestString)
-    AsyncFunction("digestStringAsync", this@CryptoModule::digestString)
-    Function("getRandomBase64String", this@CryptoModule::getRandomBase64String)
-    AsyncFunction("getRandomBase64StringAsync", this@CryptoModule::getRandomBase64String)
-    Function("getRandomValues", this@CryptoModule::getRandomValues)
-    Function("digest", this@CryptoModule::digest)
-    Function("randomUUID") {
-      UUID.randomUUID().toString()
-    }
-  }
-
-  private fun getRandomBase64String(randomByteCount: Int): String {
-    val output = ByteArray(randomByteCount)
-    secureRandom.nextBytes(output)
-    return Base64.encodeToString(output, Base64.NO_WRAP)
-  }
-
-  private fun digestString(algorithm: DigestAlgorithm, data: String, options: DigestOptions): String {
-    val messageDigest = MessageDigest.getInstance(algorithm.value).apply { update(data.toByteArray()) }
-
-    val digest: ByteArray = messageDigest.digest()
+    val digest = messageDigest.digest()
     return when (options.encoding) {
       DigestOptions.Encoding.BASE64 -> {
         Base64.encodeToString(digest, Base64.NO_WRAP)
       }
+
       DigestOptions.Encoding.HEX -> {
         digest.joinToString(separator = "") { byte ->
           ((byte.toInt() and 0xff) + 0x100)
@@ -49,16 +42,45 @@ class CryptoModule : Module() {
     }
   }
 
-  private fun digest(algorithm: DigestAlgorithm, output: TypedArray, data: TypedArray) {
-    val messageDigest = MessageDigest.getInstance(algorithm.value).apply { update(data.toDirectBuffer()) }
-
-    val digest: ByteArray = messageDigest.digest()
-    output.write(digest, output.byteOffset, output.byteLength)
+  @JS
+  suspend fun digestStringAsync(
+    algorithm: DigestAlgorithm,
+    data: String,
+    options: DigestOptions
+  ): String = withContext(Dispatchers.Default) {
+    digestString(algorithm, data, options)
   }
 
-  private fun getRandomValues(typedArray: TypedArray) {
+  @JS
+  fun getRandomValues(typedArray: TypedArray) {
     val array = ByteArray(typedArray.byteLength)
     secureRandom.nextBytes(array)
-    typedArray.write(array, typedArray.byteOffset, typedArray.byteLength)
+    typedArray.write(
+      buffer = array,
+      position = 0,
+      size = typedArray.byteLength
+    )
   }
+
+  @JS
+  fun digest(
+    algorithm: DigestAlgorithm,
+    output: TypedArray,
+    data: TypedArray
+  ) {
+    val messageDigest = MessageDigest
+      .getInstance(algorithm.value)
+      .apply { update(data.toDirectBuffer()) }
+
+    val digest = messageDigest.digest()
+    val outputLength = min(digest.size, output.byteLength)
+    output.write(
+      buffer = digest,
+      position = 0,
+      size = outputLength
+    )
+  }
+
+  @JS
+  fun randomUUID(): String = UUID.randomUUID().toString()
 }

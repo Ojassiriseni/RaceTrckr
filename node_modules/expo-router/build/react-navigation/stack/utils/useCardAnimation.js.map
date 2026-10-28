@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/stack/utils/useCardAnimation.tsx"],"sourcesContent":[null],"names":["useCardAnimation","animation","use","CardAnimationContext","undefined","Error"],"mappings":"AAAA;;;;;+BAKgBA;;;eAAAA;;;;yBAJI;;;;;;sCAEiB;AAE9B,SAASA;IACd,MAAMC,YAAYC,IAAAA,YAAG,EAACC,0CAAoB;IAE1C,IAAIF,cAAcG,WAAW;QAC3B,MAAM,IAAIC,MAAM;IAClB;IAEA,OAAOJ;AACT"}

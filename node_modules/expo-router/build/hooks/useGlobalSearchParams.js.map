@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/useGlobalSearchParams.ts"],"sourcesContent":[null],"names":["useGlobalSearchParams","useRouteInfo","params"],"mappings":"AAAA;;;;;+BA+CgBA;;;eAAAA;;;8BA7Ca;AA6CtB,SAASA;IACd,OAAOC,IAAAA,0BAAY,IAAGC,MAAM;AAC9B"}

@@ -1,0 +1,264 @@
+// Copyright © 2024 650 Industries.
+
+'use client';
+
+import { type Component, type ComponentType, createRef, PureComponent } from 'react';
+import {
+  type ReactNativeElement,
+  findNodeHandle,
+  type HostComponent,
+  NativeComponentRegistry,
+} from 'react-native';
+
+import { SharedObject } from './SharedObject';
+import { requireNativeModule } from './requireNativeModule';
+
+// To make the transition from React Native's `requireNativeComponent` to Expo's
+// `requireNativeViewManager` as easy as possible, `requireNativeViewManager` is a drop-in
+// replacement for `requireNativeComponent`.
+//
+// For each view manager, we create a wrapper component that accepts all the props available to
+// the author of the universal module. This wrapper component splits the props into two sets: props
+// passed to React Native's View (ex: style, testID) and custom view props, which are passed to the
+// adapter view component in a prop called `proxiedProperties`.
+
+/**
+ * A map that caches registered native components.
+ */
+const nativeComponentsCache = new Map<string, HostComponent<any>>();
+
+// TODO(@kitten): Optimally, this is defined on ExpoGlobal, but we treat `__expo_app_identifier__` as internal
+declare namespace globalThis {
+  const expo:
+    | undefined
+    | {
+        __expo_app_identifier__?: string;
+        getViewConfig(
+          moduleName: string,
+          viewName?: string
+        ): {
+          validAttributes: Record<string, any>;
+          directEventTypes: Record<string, { registrationName: string }>;
+        } | null;
+      };
+}
+
+/**
+ * Requires a React Native component using the static view config from an Expo module.
+ */
+function requireNativeComponent<Props extends object>(
+  moduleName: string,
+  viewName?: string
+): HostComponent<Props> {
+  const appIdentifier = globalThis.expo?.['__expo_app_identifier__'] ?? '';
+  const viewNameSuffix = appIdentifier ? `_${appIdentifier}` : '';
+
+  const nativeViewName = viewName
+    ? `ViewManagerAdapter_${moduleName}_${viewName}${viewNameSuffix}`
+    : `ViewManagerAdapter_${moduleName}${viewNameSuffix}`;
+
+  return NativeComponentRegistry.get<Props>(nativeViewName, () => {
+    const expoViewConfig = globalThis.expo?.getViewConfig(moduleName, viewName);
+
+    if (!expoViewConfig) {
+      console.warn(
+        'Unable to get the view config for %s from module %s',
+        viewName ?? 'default view',
+        moduleName
+      );
+      return { uiViewClassName: nativeViewName };
+    }
+
+    return {
+      uiViewClassName: nativeViewName,
+      directEventTypes: expoViewConfig.directEventTypes,
+      validAttributes: addAttributeProcessing(expoViewConfig.validAttributes),
+    };
+  });
+}
+
+/**
+ * Unwraps a shared object to its id so that native receives the registry id
+ * instead of the JS wrapper. Other values are passed through unchanged.
+ */
+function processPropValue(value: unknown): unknown {
+  if (value != null && typeof value === 'object' && value instanceof SharedObject) {
+    // `__expo_shared_object_id__` is a hidden property installed by native and planned for
+    // removal; the `typeof` check guards against returning `undefined` once native stops
+    // setting the property.
+    // @ts-expect-error
+    const sharedObjectId = value.__expo_shared_object_id__;
+    if (typeof sharedObjectId === 'number') {
+      return sharedObjectId;
+    }
+  }
+  return value;
+}
+
+/**
+ * Wraps each attribute in the descriptor shape React Native expects and attaches `process`
+ * to unwrap shared objects to their registry id. `diff` is intentionally left unset so
+ * React Native falls back to its `deepDiffer` default, which does structural comparison
+ * for object/array props.
+ */
+function addAttributeProcessing(validAttributes: Record<string, any>): Record<string, any> {
+  const descriptor = { process: processPropValue };
+  const attributes: Record<string, any> = {};
+  for (const key of Object.keys(validAttributes)) {
+    attributes[key] = descriptor;
+  }
+  return attributes;
+}
+
+/**
+ * Requires a React Native component from cache if possible. This prevents
+ * "Tried to register two views with the same name" errors on fast refresh, but
+ * also when there are multiple versions of the same package with native component.
+ */
+function requireCachedNativeComponent<Props extends object>(
+  moduleName: string,
+  viewName?: string
+): HostComponent<Props> {
+  const cacheKey = `${moduleName}_${viewName}`;
+  const cachedNativeComponent = nativeComponentsCache.get(cacheKey);
+
+  if (!cachedNativeComponent) {
+    const nativeComponent = requireNativeComponent<Props>(moduleName, viewName);
+    nativeComponentsCache.set(cacheKey, nativeComponent);
+    return nativeComponent;
+  }
+  return cachedNativeComponent;
+}
+
+/**
+ * Maps `aria-*`, `id` and `tabIndex` props to native props.
+ * Mirrors `Libraries/Components/View/View.js` in React Native 0.88.
+ */
+function mapAriaProps(props: Record<string, any>): Record<string, any> {
+  const {
+    accessibilityState,
+    accessibilityValue,
+    'aria-busy': ariaBusy,
+    'aria-checked': ariaChecked,
+    'aria-disabled': ariaDisabled,
+    'aria-expanded': ariaExpanded,
+    'aria-hidden': ariaHidden,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-live': ariaLive,
+    'aria-selected': ariaSelected,
+    'aria-valuemax': ariaValueMax,
+    'aria-valuemin': ariaValueMin,
+    'aria-valuenow': ariaValueNow,
+    'aria-valuetext': ariaValueText,
+    id,
+    tabIndex,
+    ...resolvedProps
+  } = props;
+
+  if (ariaLabelledBy !== undefined) {
+    resolvedProps.accessibilityLabelledBy = ariaLabelledBy.split(/\s*,\s*/g);
+  }
+  if (ariaLabel !== undefined) {
+    resolvedProps.accessibilityLabel = ariaLabel;
+  }
+  if (ariaLive !== undefined) {
+    resolvedProps.accessibilityLiveRegion = ariaLive === 'off' ? 'none' : ariaLive;
+  }
+  if (ariaHidden !== undefined) {
+    resolvedProps.accessibilityElementsHidden = ariaHidden;
+    if (ariaHidden === true) {
+      resolvedProps.importantForAccessibility = 'no-hide-descendants';
+    }
+  }
+  if (id !== undefined) {
+    resolvedProps.nativeID = id;
+  }
+  if (tabIndex !== undefined) {
+    resolvedProps.focusable = !tabIndex;
+  }
+  if (
+    accessibilityState != null ||
+    ariaBusy != null ||
+    ariaChecked != null ||
+    ariaDisabled != null ||
+    ariaExpanded != null ||
+    ariaSelected != null
+  ) {
+    resolvedProps.accessibilityState = {
+      busy: ariaBusy ?? accessibilityState?.busy,
+      checked: ariaChecked ?? accessibilityState?.checked,
+      disabled: ariaDisabled ?? accessibilityState?.disabled,
+      expanded: ariaExpanded ?? accessibilityState?.expanded,
+      selected: ariaSelected ?? accessibilityState?.selected,
+    };
+  }
+  if (
+    accessibilityValue != null ||
+    ariaValueMax != null ||
+    ariaValueMin != null ||
+    ariaValueNow != null ||
+    ariaValueText != null
+  ) {
+    resolvedProps.accessibilityValue = {
+      max: ariaValueMax ?? accessibilityValue?.max,
+      min: ariaValueMin ?? accessibilityValue?.min,
+      now: ariaValueNow ?? accessibilityValue?.now,
+      text: ariaValueText ?? accessibilityValue?.text,
+    };
+  }
+  return resolvedProps;
+}
+
+/**
+ * A drop-in replacement for `requireNativeComponent`.
+ */
+export function requireNativeViewManager<P extends object>(
+  moduleName: string,
+  viewName?: string
+): ComponentType<P> {
+  const ReactNativeComponent = requireCachedNativeComponent(moduleName, viewName);
+
+  class NativeComponent extends PureComponent<P> {
+    static displayName = viewName ? viewName : moduleName;
+
+    nativeRef = createRef<Component & ReactNativeElement>();
+
+    // This will be accessed from native when the prototype functions are called,
+    // in order to find the associated native view.
+    nativeTag: number | null = null;
+
+    componentDidMount(): void {
+      this.nativeTag = findNodeHandle(this.nativeRef.current);
+    }
+
+    /**
+     * The underlying host component
+     */
+    getNativeRef(): (Component & ReactNativeElement) | null {
+      return this.nativeRef.current;
+    }
+
+    render() {
+      return <ReactNativeComponent {...mapAriaProps(this.props)} ref={this.nativeRef} />;
+    }
+  }
+
+  try {
+    const nativeModule = requireNativeModule(moduleName);
+    const nativeViewPrototype =
+      nativeModule.ViewPrototypes[viewName ? `${moduleName}_${viewName}` : moduleName];
+    if (nativeViewPrototype) {
+      // Assign native view functions to the component prototype, so they can be accessed from the ref.
+      Object.assign(NativeComponent.prototype, nativeViewPrototype);
+    }
+  } catch {
+    // `requireNativeModule` may throw an error when the native module cannot be found.
+    // In some tests we don't mock the entire modules, but we do want to mock native views. For now,
+    // until we still have to support the legacy modules proxy and don't have better ways to mock,
+    // let's just gracefully skip assigning the prototype functions.
+    // See: https://github.com/expo/expo/blob/main/packages/expo-modules-core/src/__tests__/NativeViewManagerAdapter-test.native.tsx
+  }
+
+  return NativeComponent;
+}

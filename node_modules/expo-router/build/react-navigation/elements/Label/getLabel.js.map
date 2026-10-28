@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/elements/Label/getLabel.tsx"],"sourcesContent":[null],"names":["getLabel","options","fallback","label","undefined","title"],"mappings":";;;;+BAAgBA;;;eAAAA;;;AAAT,SAASA,SAASC,OAA2C,EAAEC,QAAgB;IACpF,OAAOD,QAAQE,KAAK,KAAKC,YACrBH,QAAQE,KAAK,GACbF,QAAQI,KAAK,KAAKD,YAChBH,QAAQI,KAAK,GACbH;AACR"}

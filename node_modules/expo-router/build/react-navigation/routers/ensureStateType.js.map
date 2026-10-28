@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/routers/ensureStateType.tsx"],"sourcesContent":[null],"names":["ensureStateType","state","type"],"mappings":";;;;+BASgBA;;;eAAAA;;;AAAT,SAASA,gBACdC,KAAgC,EAChCC,IAAU;IAEV,IAAID,MAAMC,IAAI,IAAI,MAAM;QACtB,+EAA+E;QAC/E,OAAOD;IACT;IAEA,OAAO;QAAE,GAAGA,KAAK;QAAEC;IAAK;AAC1B"}

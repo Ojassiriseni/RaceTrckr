@@ -1,0 +1,1 @@
+{"version":3,"sources":["global-state/browserHistoryAdapter.native.ts"],"sourcesContent":[null],"names":["createBrowserHistoryAdapter","apply","listen"],"mappings":";;;;+BAGgBA;;;eAAAA;;;AAAT,SAASA;IACd,OAAO;QACLC,OAAO,KAAO;QACdC,QAAQ,IAAM,KAAO;IACvB;AACF"}

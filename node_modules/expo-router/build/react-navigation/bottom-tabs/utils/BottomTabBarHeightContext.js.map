@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/bottom-tabs/utils/BottomTabBarHeightContext.tsx"],"sourcesContent":[null],"names":["BottomTabBarHeightContext","React","createContext","undefined"],"mappings":"AAAA;;;;;+BAGaA;;;eAAAA;;;;iEAFU;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEhB,MAAMA,0CAA4BC,SAAMC,aAAa,CAAqBC"}

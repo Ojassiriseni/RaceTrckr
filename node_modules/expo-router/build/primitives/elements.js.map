@@ -1,0 +1,1 @@
+{"version":3,"sources":["primitives/elements.tsx"],"sourcesContent":[null],"names":["Badge","Icon","Label","VectorIcon","props"],"mappings":";;;;;;;;;;;;;;;;;QAEgBA;eAAAA;;QAIAC;eAAAA;;QAsBAC;eAAAA;;QAJAC;eAAAA;;;AAtBT,SAASH,MAAMI,KAAiB;IACrC,OAAO;AACT;AAEO,SAASH,KAAKG,KAAgB;IACnC,OAAO;AACT;AAgBO,SAASD,WAAuCC,KAA6B;IAClF,OAAO;AACT;AAEO,SAASF,MAAME,KAAiB;IACrC,OAAO;AACT"}

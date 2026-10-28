@@ -1,0 +1,1 @@
+{"version":3,"sources":["internal/static.ts"],"sourcesContent":[null],"names":["InnerRoot","getRouteInfoForMatchedRoute","registerStaticRootComponent"],"mappings":";;;;;;;;;;;;;;;;QAASA;eAAAA,eAAS;;QAGhBC;eAAAA,wDAA2B;;QAFpBC;eAAAA,kDAA2B;;;sBADV;uCACkB;6CAIrC"}

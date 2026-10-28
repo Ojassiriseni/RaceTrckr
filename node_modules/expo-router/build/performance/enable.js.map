@@ -1,0 +1,1 @@
+{"version":3,"sources":["performance/enable.ts"],"sourcesContent":[null],"names":["isEnabled","unstable_enablePerformanceIntegration","enabled"],"mappings":";;;;;;;;;;;;;;;QAYgBA;eAAAA;;QAJAC;eAAAA;;;AARhB,IAAIC,UAAU;AAQP,SAASD;IACdC,UAAU;AACZ;AAEO,SAASF;IACd,OAAOE;AACT"}

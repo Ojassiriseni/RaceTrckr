@@ -1,0 +1,1 @@
+{"version":3,"sources":["ts-declarations/global.ts"],"sourcesContent":[null],"names":["EventEmitter","NativeModule","SharedObject","SharedRef"],"mappings":"AAAA,SAASA,YAAY,QAAQ,iBAAiB;AAC9C,SAASC,YAAY,QAAQ,iBAAiB;AAC9C,SAASC,YAAY,QAAQ,iBAAiB;AAC9C,SAASC,SAAS,QAAQ,cAAc"}

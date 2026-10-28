@@ -1,0 +1,71 @@
+import React from 'react';
+import { type ViewProps } from 'react-native';
+import { type TabsHostProps, type TabsScreenProps } from 'react-native-screens';
+import type { NativeTabOptions, NativeTabsViewProps } from './types';
+export declare const TabsScreen: React.ComponentType<TabsScreenProps & Pick<ViewProps, "nativeID" | "pointerEvents">>;
+export declare function useSelectedScreenKey({ focusedIndex, provenance, tabs, }: Pick<NativeTabsViewProps, 'focusedIndex' | 'provenance' | 'tabs'>): {
+    selectedScreenKey: string;
+    provenance: number;
+};
+export declare function useOnTabSelectedHandler(onTabChange: NativeTabsViewProps['onTabChange']): NonNullable<TabsHostProps['onTabSelected']>;
+export declare function useOnTabSelectionPreventedHandler(onTabChange: NativeTabsViewProps['onTabChange']): NonNullable<TabsHostProps['onTabSelectionPrevented']>;
+/**
+ * Cross-platform fields used to render a single tab screen. Each platform
+ * extends this with its own appearance fields.
+ */
+export interface InternalTabScreenProps {
+    name: string;
+    isFocused: boolean;
+    options: NativeTabOptions;
+    contentRenderer: () => React.ReactNode;
+}
+export declare function useSharedScreenProps(props: InternalTabScreenProps): {
+    options: NativeTabOptions;
+    pointerEvents: "box-none" | "none";
+    title: string;
+    nativeIosOverrides: import("react-native-screens").TabsScreenPropsIOS | undefined;
+    nativeAndroidOverrides: import("react-native-screens").TabsScreenPropsAndroid | undefined;
+    nativeRestOverrides: {
+        children?: React.ReactNode;
+        style?: import("react-native").StyleProp<Pick<import("react-native").ViewStyle, "backgroundColor">>;
+        testID?: string | undefined | undefined;
+        accessibilityLabel?: string | undefined | undefined;
+        orientation?: import("react-native-screens").TabsScreenOrientation | undefined;
+        title?: string | undefined | undefined;
+        onWillAppear?: import("react-native-screens").TabsScreenEventHandler<import("react-native-screens/lib/typescript/components/tabs/screen").EmptyObject> | undefined;
+        onWillDisappear?: import("react-native-screens").TabsScreenEventHandler<import("react-native-screens/lib/typescript/components/tabs/screen").EmptyObject> | undefined;
+        preventNativeSelection?: boolean | undefined | undefined;
+        badgeValue?: string | undefined | undefined;
+        specialEffects?: {
+            repeatedTabSelection?: {
+                popToRoot?: boolean | undefined;
+                scrollToTop?: boolean | undefined;
+            } | undefined;
+        } | undefined | undefined;
+        tabBarItemTestID?: string | undefined | undefined;
+        tabBarItemAccessibilityLabel?: string | undefined | undefined;
+        onDidAppear?: import("react-native-screens").TabsScreenEventHandler<import("react-native-screens/lib/typescript/components/tabs/screen").EmptyObject> | undefined;
+        onDidDisappear?: import("react-native-screens").TabsScreenEventHandler<import("react-native-screens/lib/typescript/components/tabs/screen").EmptyObject> | undefined;
+    };
+    screenKey: string;
+    icon: {
+        sf?: import("sf-symbols-typescript").SFSymbol;
+        xcasset?: string;
+        drawable?: string;
+    } | {
+        src?: import("react-native").ImageSourcePropType;
+        renderingMode?: import("./types").IconRenderingMode;
+    } | undefined;
+    selectedIcon: {
+        sf?: import("sf-symbols-typescript").SFSymbol;
+        xcasset?: string;
+        drawable?: string;
+    } | {
+        src?: import("react-native").ImageSourcePropType;
+        renderingMode?: import("./types").IconRenderingMode;
+    } | undefined;
+};
+export declare function ScreenContent({ options, contentRenderer, }: {
+    options: NativeTabOptions;
+    contentRenderer: () => React.ReactNode;
+}): React.JSX.Element;

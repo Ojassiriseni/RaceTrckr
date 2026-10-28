@@ -1,0 +1,259 @@
+import { registerWebModule, NativeModule, CodedError } from 'expo';
+
+import type {
+  AESDecryptOptions,
+  AESEncryptOptions,
+  AESSealedDataConfig,
+  BinaryInput,
+  GCMTagByteLength,
+} from './aes.types';
+import { AESKeySize } from './aes.types';
+import {
+  base64ToUintArray,
+  binaryInputBytes,
+  bytesToHex,
+  hexToUintArray,
+  uint8ArrayToBase64,
+} from './web-utils';
+
+const DEFAULT_IV_LENGTH = 12;
+const DEFAULT_TAG_LENGTH = 16;
+
+const defaultConfig: AESSealedDataConfig = {
+  ivLength: DEFAULT_IV_LENGTH,
+  tagLength: DEFAULT_TAG_LENGTH,
+};
+
+class EncryptionKey {
+  key: CryptoKey;
+  keySize: AESKeySize;
+
+  private constructor(key: CryptoKey, size: AESKeySize) {
+    this.key = key;
+    this.keySize = size;
+  }
+
+  static async generate(size?: AESKeySize): Promise<EncryptionKey> {
+    const keySize = size ?? AESKeySize.AES256;
+    const algorithm = { name: 'AES-GCM', length: keySize };
+    const key = await crypto.subtle.generateKey(algorithm, true, ['encrypt', 'decrypt']);
+    return new EncryptionKey(key, keySize);
+  }
+
+  static async import(
+    input: Uint8Array | string,
+    encoding?: 'hex' | 'base64'
+  ): Promise<EncryptionKey> {
+    let bytes: Uint8Array;
+    if (typeof input === 'string') {
+      bytes = encoding === 'base64' ? base64ToUintArray(input) : hexToUintArray(input);
+    } else {
+      bytes = input;
+    }
+
+    const key = await crypto.subtle.importKey('raw', bytes as BufferSource, 'AES-GCM', true, [
+      'encrypt',
+      'decrypt',
+    ]);
+    return new EncryptionKey(key, bytes.byteLength * 8);
+  }
+
+  async bytes(): Promise<Uint8Array> {
+    const buffer = await crypto.subtle.exportKey('raw', this.key);
+    return new Uint8Array(buffer);
+  }
+
+  async encoded(encoding: 'hex' | 'base64'): Promise<string> {
+    const bytes = await this.bytes();
+    const encoded = encoding === 'base64' ? uint8ArrayToBase64(bytes) : bytesToHex(bytes);
+    return encoded;
+  }
+
+  get size(): AESKeySize {
+    return this.keySize;
+  }
+}
+
+class SealedData {
+  private bytes: Uint8Array;
+  private config: AESSealedDataConfig;
+
+  private constructor(bytes: Uint8Array, config: AESSealedDataConfig) {
+    this.bytes = bytes;
+    this.config = config;
+  }
+
+  static fromCombined(combined: BinaryInput, config?: AESSealedDataConfig): SealedData {
+    const bytes = binaryInputBytes(combined);
+    const sealedConfig = config ?? defaultConfig;
+    const minimumLength = sealedConfig.ivLength + sealedConfig.tagLength;
+
+    if (bytes.byteLength < minimumLength) {
+      throw new CodedError(
+        'ERR_INVALID_SEALED_DATA_CONFIG',
+        `Sealed data is ${bytes.byteLength} bytes, which is too short to hold a ${sealedConfig.ivLength}-byte IV and a ${sealedConfig.tagLength}-byte authentication tag. Pass the whole combined output of encryptAsync, or set ivLength and tagLength in the config to match how the data was sealed.`
+      );
+    }
+
+    return new SealedData(bytes, sealedConfig);
+  }
+
+  static fromParts(
+    iv: BinaryInput,
+    ciphertext: BinaryInput,
+    tag?: BinaryInput | GCMTagByteLength
+  ): SealedData {
+    const ciphertextBytes = binaryInputBytes(ciphertext);
+    const ivBytes = binaryInputBytes(iv);
+    const ivLength = ivBytes.byteLength;
+
+    if (!tag) {
+      tag = DEFAULT_TAG_LENGTH;
+    }
+
+    if (typeof tag === 'number') {
+      const totalLength = ivLength + ciphertextBytes.byteLength;
+      const combined = new Uint8Array(totalLength);
+      combined.set(ivBytes);
+      combined.set(ciphertextBytes, ivLength);
+
+      const config: AESSealedDataConfig = {
+        ivLength,
+        tagLength: tag,
+      };
+      return new SealedData(combined, config);
+    }
+
+    const tagBytes = binaryInputBytes(tag);
+    const tagLength = tagBytes.byteLength as GCMTagByteLength;
+    const totalLength = ivLength + ciphertextBytes.byteLength + tagLength;
+
+    const combined = new Uint8Array(totalLength);
+    combined.set(ivBytes);
+    combined.set(ciphertextBytes, ivLength);
+    combined.set(tagBytes, totalLength - tagLength);
+
+    return new SealedData(combined, { ivLength, tagLength });
+  }
+
+  get ivSize(): number {
+    return this.config.ivLength;
+  }
+  get tagSize(): GCMTagByteLength {
+    return this.config.tagLength;
+  }
+  get combinedSize(): number {
+    return this.bytes.byteLength;
+  }
+
+  async iv(encoding?: 'bytes' | 'base64'): Promise<Uint8Array | string> {
+    const useBase64 = encoding === 'base64';
+    const bytes = this.bytes.subarray(0, this.ivSize);
+    return useBase64 ? uint8ArrayToBase64(bytes) : bytes;
+  }
+  async tag(encoding?: 'bytes' | 'base64'): Promise<Uint8Array | string> {
+    const useBase64 = encoding === 'base64';
+    const offset = this.combinedSize - this.tagSize;
+    const bytes = this.bytes.subarray(offset, offset + this.tagSize);
+    return useBase64 ? uint8ArrayToBase64(bytes) : bytes;
+  }
+  async combined(encoding?: 'bytes' | 'base64'): Promise<Uint8Array | string> {
+    const useBase64 = encoding === 'base64';
+    const bytes = this.bytes.subarray();
+    return useBase64 ? uint8ArrayToBase64(bytes) : bytes;
+  }
+  async ciphertext(options?: {
+    includeTag?: boolean;
+    encoding?: 'bytes' | 'base64';
+  }): Promise<Uint8Array | string> {
+    const includeTag = options?.includeTag ?? false;
+    const useBase64 = options?.encoding === 'base64';
+
+    const taggedCiphertextLength = this.combinedSize - this.ivSize;
+    const ciphertextLength = includeTag
+      ? taggedCiphertextLength
+      : taggedCiphertextLength - this.tagSize;
+
+    const bytes = this.bytes.subarray(this.ivSize, this.ivSize + ciphertextLength);
+    return useBase64 ? uint8ArrayToBase64(bytes) : bytes;
+  }
+}
+
+type NativeEncryptOptions = Omit<AESEncryptOptions, 'nonce'> & {
+  nonce?: number | Uint8Array | undefined;
+};
+
+class AesCryptoModule extends NativeModule {
+  EncryptionKey = EncryptionKey;
+  SealedData = SealedData;
+
+  async encryptAsync(
+    plaintext: BinaryInput,
+    key: EncryptionKey,
+    options: NativeEncryptOptions = {}
+  ): Promise<SealedData> {
+    const {
+      nonce = DEFAULT_IV_LENGTH,
+      tagLength = DEFAULT_TAG_LENGTH,
+      additionalData: aad,
+    } = options;
+
+    const iv =
+      typeof nonce === 'number'
+        ? crypto.getRandomValues(new Uint8Array(nonce))
+        : binaryInputBytes(nonce);
+
+    const baseParams = { name: 'AES-GCM', iv, tagLength: tagLength * 8 };
+
+    // workaround for invalid AAD format error when it's present but undefined
+    const gcmParams = aad
+      ? {
+          ...baseParams,
+          additionalData: binaryInputBytes(aad),
+        }
+      : baseParams;
+
+    const ciphertextWithTag = await crypto.subtle.encrypt(
+      gcmParams,
+      key.key,
+      binaryInputBytes(plaintext) as BufferSource
+    );
+
+    return SealedData.fromParts(iv, ciphertextWithTag, tagLength);
+  }
+
+  async decryptAsync(
+    sealedData: SealedData,
+    key: EncryptionKey,
+    options: AESDecryptOptions = {}
+  ): Promise<string | Uint8Array> {
+    const { additionalData: aad, output } = options;
+
+    // workaround for invalid AAD format error when it's present but undefined
+    const iv = await sealedData.iv();
+    const baseParams = {
+      name: 'AES-GCM',
+      iv: iv as BufferSource,
+      tagLength: sealedData.tagSize * 8,
+    };
+    const gcmParams: AesGcmParams = aad
+      ? {
+          ...baseParams,
+          additionalData: binaryInputBytes(aad) as BufferSource,
+        }
+      : baseParams;
+
+    const taggedCiphertext = await sealedData.ciphertext({ includeTag: true });
+    const plaintextBuffer = await crypto.subtle.decrypt(
+      gcmParams,
+      key.key,
+      taggedCiphertext as BufferSource
+    );
+
+    const useBase64 = output === 'base64';
+    const bytes = new Uint8Array(plaintextBuffer);
+    return useBase64 ? uint8ArrayToBase64(bytes) : bytes;
+  }
+}
+
+export default registerWebModule(AesCryptoModule, 'ExpoCryptoAES');

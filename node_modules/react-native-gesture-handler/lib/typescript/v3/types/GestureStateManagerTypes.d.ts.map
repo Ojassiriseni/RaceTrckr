@@ -1,0 +1,1 @@
+{"version":3,"file":"GestureStateManagerTypes.d.ts","sourceRoot":"","sources":["../../../../src/v3/types/GestureStateManagerTypes.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,uBAAuB,GAAG;IACpC,QAAQ,CAAC,UAAU,EAAE,MAAM,GAAG,IAAI,CAAC;IACnC,IAAI,CAAC,UAAU,EAAE,MAAM,GAAG,IAAI,CAAC;IAC/B,UAAU,CAAC,UAAU,EAAE,MAAM,GAAG,IAAI,CAAC;CACtC,CAAC"}

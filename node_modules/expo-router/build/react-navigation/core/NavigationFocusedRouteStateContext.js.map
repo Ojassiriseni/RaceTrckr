@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/NavigationFocusedRouteStateContext.tsx"],"sourcesContent":[null],"names":["NavigationFocusedRouteStateContext","React","createContext","undefined"],"mappings":"AAAA;;;;;+BAkBaA;;;eAAAA;;;;iEAjBU;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAiBhB,MAAMA,mDAAqCC,SAAMC,aAAa,CAEnEC"}

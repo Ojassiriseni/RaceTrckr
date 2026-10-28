@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/native-stack/index.tsx"],"sourcesContent":[null],"names":["NativeStackView","createNativeStackNavigator","useAnimatedHeaderHeight"],"mappings":"AAAA;;CAEC,GACD;;;;CAIC;;;;;;;;;;;;;;;;QAMQA;eAAAA,gCAAe;;QALfC;eAAAA,sDAA0B;;QAU1BC;eAAAA,gDAAuB;;;4CAVW;iCAKX;yCAKQ"}

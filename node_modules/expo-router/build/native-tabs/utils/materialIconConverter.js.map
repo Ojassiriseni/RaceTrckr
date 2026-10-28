@@ -1,0 +1,1 @@
+{"version":3,"sources":["native-tabs/utils/materialIconConverter.tsx"],"sourcesContent":[null],"names":["convertMaterialIconNameToImageSource","name","console","warn","undefined"],"mappings":";;;;+BAIgBA;;;eAAAA;;;AAAT,SAASA,qCACdC,IAAmB;IAEnBC,QAAQC,IAAI,CACV;IAEF,OAAOC;AACT"}

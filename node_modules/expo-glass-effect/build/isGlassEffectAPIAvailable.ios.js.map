@@ -1,0 +1,1 @@
+{"version":3,"sources":["isGlassEffectAPIAvailable.ios.ts"],"sourcesContent":[null],"names":["requireNativeModule","IS_GLASS_EFFECT_API_AVAILABLE","isGlassEffectAPIAvailable","undefined"],"mappings":"AAAA,SAASA,mBAAmB,QAAQ,OAAO;AAE3C,IAAIC;AAEJ;;;;;;;CAOC,GACD,OAAO,SAASC;IACd,IAAID,kCAAkCE,WAAW;QAC/CF,gCACED,oBAAoB,mBAAmBE,yBAAyB;IACpE;IACA,OAAO,CAAC,CAACD;AACX"}

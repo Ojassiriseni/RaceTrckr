@@ -1,0 +1,174 @@
+#pragma once
+
+#include <react/renderer/componentregistry/ComponentDescriptorFactory.h>
+#include <react/renderer/mounting/MountingOverrideDelegate.h>
+#include <react/renderer/scheduler/Scheduler.h>
+#include <react/renderer/uimanager/UIManagerBinding.h>
+#include <reanimated/Compat/WorkletsApi.h>
+#include <reanimated/LayoutAnimations/LayoutAnimationsManager.h>
+#include <reanimated/LayoutAnimations/LayoutAnimationsProxyCommon.h>
+#include <reanimated/LayoutAnimations/LayoutAnimationsUtils.h>
+#include <reanimated/Tools/PlatformDepMethodsHolder.h>
+
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+namespace reanimated {
+
+class LayoutAnimationsProxyRegistry;
+
+using namespace facebook;
+
+typedef enum class ExitingState_Legacy : std::uint8_t {
+  UNDEFINED = 1,
+  WAITING = 2,
+  ANIMATING = 4,
+  DEAD = 8,
+  MOVED = 16,
+  DELETED = 32,
+} ExitingState_Legacy;
+
+struct MutationNode;
+
+/**
+ Represents a view that was either removed or had a child removed from the
+ ShadowTree
+ */
+struct Node {
+  std::vector<std::shared_ptr<MutationNode>> children, unflattenedChildren;
+  std::shared_ptr<Node> parent, unflattenedParent;
+  Tag tag;
+  void removeChildFromUnflattenedTree(const std::shared_ptr<MutationNode> &child);
+  void applyMutationToIndices(const ShadowViewMutation &mutation);
+  void insertChildren(std::vector<std::shared_ptr<MutationNode>> &newChildren);
+  void insertUnflattenedChildren(std::vector<std::shared_ptr<MutationNode>> &newChildren);
+  virtual bool isMutationNode();
+  explicit Node(const Tag tag) : tag(tag) {}
+  Node(Node &&node) noexcept
+      : children(std::move(node.children)), unflattenedChildren(std::move(node.unflattenedChildren)), tag(node.tag) {}
+  Node(Node &node) : children(node.children), unflattenedChildren(node.unflattenedChildren), tag(node.tag) {}
+  virtual ~Node() = default;
+};
+
+/**
+ Represents a view that was removed from the ShadowTree
+ */
+struct MutationNode : public Node {
+  ShadowViewMutation mutation;
+  ExitingState_Legacy state = ExitingState_Legacy::UNDEFINED;
+  explicit MutationNode(ShadowViewMutation &mutation) : Node(mutation.oldChildShadowView.tag), mutation(mutation) {}
+  MutationNode(ShadowViewMutation &mutation, Node &&node) : Node(std::move(node)), mutation(mutation) {}
+  bool isMutationNode() override;
+};
+
+static inline bool isRNSScreen(const std::shared_ptr<MutationNode> &node) {
+  const auto &componentName = node->mutation.oldChildShadowView.componentName;
+  return !std::strcmp(componentName, "RNSScreenStack") || !std::strcmp(componentName, "RNSScreen") ||
+      !std::strcmp(componentName, "RNSModalScreen");
+}
+
+static inline void mergeAndSwap(
+    std::vector<std::shared_ptr<MutationNode>> &A,
+    std::vector<std::shared_ptr<MutationNode>> &B) {
+  std::vector<std::shared_ptr<MutationNode>> merged;
+  auto it1 = A.begin(), it2 = B.begin();
+  while (it1 != A.end() && it2 != B.end()) {
+    if ((*it1)->mutation.index < (*it2)->mutation.index) {
+      merged.push_back(*it1);
+      it1++;
+    } else {
+      merged.push_back(*it2);
+      it2++;
+    }
+  }
+  while (it1 != A.end()) {
+    merged.push_back(*it1);
+    it1++;
+  }
+  while (it2 != B.end()) {
+    merged.push_back(*it2);
+    it2++;
+  }
+  std::swap(A, merged);
+}
+
+struct LayoutAnimationsProxy_Legacy : public LayoutAnimationsProxyCommon {
+  mutable std::unordered_map<Tag, std::shared_ptr<Node>> nodeForTag_;
+  mutable std::unordered_set<std::shared_ptr<MutationNode>> deadNodes_;
+  mutable bool surfaceToRemove_ = false;
+  bool shouldFlushDeadNodes(bool surfaceDropped) const;
+#ifdef ANDROID
+  mutable bool cleanupPullScheduled_ = false;
+
+  void maybeScheduleCleanupPull(bool flushedDeadNodes) const;
+#endif
+
+  LayoutAnimationsProxy_Legacy(const SurfaceId surfaceId, const LayoutAnimationsProxyDependencies &dependencies)
+      : LayoutAnimationsProxyCommon(surfaceId, dependencies) {}
+
+  void startEnteringAnimation(const int tag, ShadowViewMutation &mutation, const std::shared_ptr<Serializable> &config)
+      const;
+  void startExitingAnimation(const int tag, ShadowViewMutation &mutation, const std::shared_ptr<Serializable> &config)
+      const;
+  void startLayoutAnimation(
+      const int tag,
+      const ShadowViewMutation &mutation,
+      const std::shared_ptr<Serializable> &config) const;
+
+  std::optional<SurfaceId> endLayoutAnimation(int tag, bool shouldRemove) override;
+  void shadowTreeWillCommit(bool isSurfaceRemoval) override;
+  void reconcileContradictedRemovals(ShadowViewMutationList &mutations, ShadowViewMutationList &filteredMutations)
+      const;
+  void parseRemoveMutations(
+      std::unordered_map<Tag, Tag> &movedViews,
+      ShadowViewMutationList &mutations,
+      std::vector<std::shared_ptr<MutationNode>> &roots) const;
+  void handleRemovals(
+      ShadowViewMutationList &filteredMutations,
+      std::vector<std::shared_ptr<MutationNode>> &roots,
+      bool surfaceDropped,
+      bool flushDeadNodes) const;
+
+  void handleUpdatesAndEnterings(
+      ShadowViewMutationList &filteredMutations,
+      const std::unordered_map<Tag, Tag> &movedViews,
+      ShadowViewMutationList &mutations,
+      const PropsParserContext &propsParserContext) const;
+  void addOngoingAnimations(ShadowViewMutationList &mutations) const;
+  void dropUpdatesForDeletedViews(ShadowViewMutationList &filteredMutations) const;
+  std::shared_ptr<ShadowView> cloneViewWithoutOpacity(
+      facebook::react::ShadowViewMutation &mutation,
+      const PropsParserContext &propsParserContext) const;
+  void updateIndexForMutation(ShadowViewMutation &mutation) const;
+
+  bool startAnimationsRecursively(
+      const std::shared_ptr<MutationNode> &node,
+      bool shouldRemoveSubviewsWithoutAnimations,
+      bool shouldAnimate,
+      bool isScreenPop,
+      ShadowViewMutationList &mutations) const;
+  void endAnimationsRecursively(const std::shared_ptr<MutationNode> &node, ShadowViewMutationList &mutations) const;
+  void maybeDropAncestors(
+      const std::shared_ptr<Node> &node,
+      const std::shared_ptr<MutationNode> &child,
+      ShadowViewMutationList &cleanupMutations) const;
+
+  // MountingOverrideDelegate
+
+  bool shouldOverridePullTransaction() const override;
+  std::optional<MountingTransaction> pullTransaction(
+      SurfaceId surfaceId,
+      MountingTransaction::Number number,
+      const TransactionTelemetry &telemetry,
+      ShadowViewMutationList mutations) const override;
+};
+
+std::shared_ptr<LayoutAnimationsProxyRegistry> createLayoutAnimationsProxyLegacyRegistry(
+    const LayoutAnimationsProxyDependencies &dependencies);
+
+} // namespace reanimated

@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/useCanGoBack.ts"],"sourcesContent":[null],"names":["useCanGoBack","canGoBack","use","CanGoBackContext","undefined","Error"],"mappings":"AAAA;;;;;+BAqBgBA;;;eAAAA;;;;yBAnBI;;;;;;kCAEa;AAiB1B,SAASA;IACd,MAAMC,YAAYC,IAAAA,YAAG,EAACC,kCAAgB;IACtC,IAAIF,cAAcG,WAAW;QAC3B,MAAM,IAAIC,MACR;IAEJ;IACA,OAAOJ;AACT"}

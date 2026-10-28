@@ -1,0 +1,1 @@
+{"version":3,"sources":["EventEmitter.ts"],"sourcesContent":[null],"names":["ensureNativeModulesAreInstalled","EventEmitter","globalThis","expo"],"mappings":"AAAA;AAEA,SAASA,+BAA+B,QAAQ,oCAAoC;AAGpFA;AAeA,OAAO,MAAMC,eAAeC,WAAWC,IAAI,CAACF,YAAY,CAAC"}

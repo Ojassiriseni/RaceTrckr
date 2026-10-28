@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/native/theming/DarkTheme.tsx"],"sourcesContent":[null],"names":["DarkTheme","dark","colors","primary","background","card","text","border","notification","fonts"],"mappings":";;;;+BAGaA;;;eAAAA;;;uBAFS;AAEf,MAAMA,YAAmB;IAC9BC,MAAM;IACNC,QAAQ;QACNC,SAAS;QACTC,YAAY;QACZC,MAAM;QACNC,MAAM;QACNC,QAAQ;QACRC,cAAc;IAChB;IACAC,OAAAA,YAAK;AACP"}

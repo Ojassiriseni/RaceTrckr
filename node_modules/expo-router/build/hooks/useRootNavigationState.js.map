@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/useRootNavigationState.ts"],"sourcesContent":[null],"names":["useRootNavigationState","state","use","RootNavigationStateContext","undefined","Error"],"mappings":"AAAA;;;;;+BAyBgBA;;;eAAAA;;;;yBAvBI;;;;;;4CAEuB;AAqBpC,SAASA;IACd,MAAMC,QAAQC,IAAAA,YAAG,EAACC,sDAA0B;IAC5C,IAAIF,UAAUG,WAAW;QACvB,MAAM,IAAIC,MACR;IAEJ;IACA,OAAOJ;AACT"}

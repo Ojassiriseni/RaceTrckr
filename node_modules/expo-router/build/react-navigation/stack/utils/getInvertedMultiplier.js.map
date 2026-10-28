@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/stack/utils/getInvertedMultiplier.tsx"],"sourcesContent":[null],"names":["getInvertedMultiplier","gestureDirection","isRTL"],"mappings":";;;;+BAEgBA;;;eAAAA;;;AAAT,SAASA,sBAAsBC,gBAAkC,EAAEC,KAAc;IACtF,OAAQD;QACN,KAAK;YACH,OAAO;QACT,KAAK;YACH,OAAO,CAAC;QACV,KAAK;YACH,OAAOC,QAAQ,CAAC,IAAI;QACtB,KAAK;YACH,OAAOA,QAAQ,IAAI,CAAC;IACxB;AACF"}

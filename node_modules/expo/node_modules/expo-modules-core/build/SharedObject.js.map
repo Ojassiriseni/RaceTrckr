@@ -1,0 +1,1 @@
+{"version":3,"sources":["SharedObject.ts"],"sourcesContent":[null],"names":["ensureNativeModulesAreInstalled","SharedObject","globalThis","expo"],"mappings":"AAAA;AAEA,SAASA,+BAA+B,QAAQ,oCAAoC;AAIpFA;AAIA,OAAO,MAAMC,eAA+CC,WAAWC,IAAI,CAACF,YAAY,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["NativeModule.ts"],"sourcesContent":[null],"names":["ensureNativeModulesAreInstalled","NativeModule","globalThis","expo"],"mappings":"AAAA;AAEA,SAASA,+BAA+B,QAAQ,oCAAoC;AAIpFA;AAIA,OAAO,MAAMC,eAA+CC,WAAWC,IAAI,CAACF,YAAY,CAAC"}

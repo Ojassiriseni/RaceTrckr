@@ -1,0 +1,1 @@
+{"version":3,"sources":["global-state/useIsNavigating.ts"],"sourcesContent":[null],"names":["useIsNavigating","use","NavigationPendingContext"],"mappings":"AAAA;;;;;+BAgBgBA;;;eAAAA;;;;yBAdI;;;;;;qCAEqB;AAYlC,SAASA;IACd,OAAOC,IAAAA,YAAG,EAACC,6CAAwB;AACrC"}

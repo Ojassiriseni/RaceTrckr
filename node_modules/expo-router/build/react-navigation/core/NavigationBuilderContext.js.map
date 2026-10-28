@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/NavigationBuilderContext.tsx"],"sourcesContent":[null],"names":["NavigationBuilderContext","React","createContext","handleAction","undefined","resetNavigator"],"mappings":"AAAA;;;;;+BAsBaA;;;eAAAA;;;;iEArBU;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAqBhB,MAAMA,yCAA2BC,SAAMC,aAAa,CAIxD;IACDC,cAAc,IAAMC;IACpBC,gBAAgB,IAAMD;AACxB"}

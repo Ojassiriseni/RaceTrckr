@@ -1,6 +1,7 @@
-import { CodedError, TypedArray } from 'expo-modules-core';
+import { type TypedArray, CodedError } from 'expo';
 
-import { CryptoDigestAlgorithm, CryptoEncoding, CryptoDigestOptions } from './Crypto.types';
+import type { CryptoDigestAlgorithm, CryptoDigestOptions } from './Crypto.types';
+import { CryptoEncoding } from './Crypto.types';
 
 const getCrypto = (): Crypto => {
   if (typeof globalThis.crypto !== 'undefined') {
@@ -44,7 +45,7 @@ export default {
     return getCrypto().getRandomValues(array);
   },
   getRandomValues(typedArray: TypedArray) {
-    return getCrypto().getRandomValues(typedArray);
+    return getCrypto().getRandomValues(typedArray as ArrayBufferView<ArrayBuffer>);
   },
   randomUUID() {
     return getCrypto().randomUUID();

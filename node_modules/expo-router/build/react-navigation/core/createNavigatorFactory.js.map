@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/createNavigatorFactory.tsx"],"sourcesContent":[null],"names":["createNavigatorFactory","Navigator","createNavigator","Screen","Group"],"mappings":";;;;+BAcgBA;;;eAAAA;;;uBAZM;wBACC;AAWhB,SAASA,uBAAuBC,SAAmC;IACxE,SAASC;QACP,OAAO;YACLD;YACAE,QAAAA,cAAM;YACNC,OAAAA,YAAK;QACP;IACF;IAEA,OAAOF;AACT"}

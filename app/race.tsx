@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle } from '../components/map-view';
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRaceSettings } from '@/contexts/race-settings-context';
@@ -422,7 +422,15 @@ export default function Race() {
   return (
     <View style={{ flex:1 }}>
 
-      <MapView style={{ flex:1 }}>
+      <MapView
+        style={{ flex:1 }}
+        initialRegion={{
+          latitude: startCoord?.latitude ?? location?.latitude ?? 37.78825,
+          longitude: startCoord?.longitude ?? location?.longitude ?? -122.4324,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02
+        }}
+      >
         <Polyline coordinates={routeCoords} strokeWidth={5} strokeColor="#38bdf8" />
         <Polyline coordinates={path} strokeWidth={3} strokeColor="#22c55e" />
 
@@ -598,7 +606,6 @@ export default function Race() {
         top:120,
         width:160,
         backgroundColor:'rgba(15,23,42,0.6)',
-        backdropFilter:'blur(10px)',
         borderRadius:16,
         borderWidth:1,
         borderColor:'rgba(255,255,255,.08)',

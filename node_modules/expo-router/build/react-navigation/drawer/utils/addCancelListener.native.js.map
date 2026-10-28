@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/drawer/utils/addCancelListener.native.tsx"],"sourcesContent":[null],"names":["addCancelListener","callback","subscription","BackHandler","addEventListener","remove"],"mappings":";;;;+BAEaA;;;eAAAA;;;;yBAFe;;;;;;AAErB,MAAMA,oBAAoB,CAACC;IAChC,MAAMC,eAAeC,0BAAW,CAACC,gBAAgB,CAAC,qBAAqBH;IAEvE,OAAO;QACLC,aAAaG,MAAM;IACrB;AACF"}

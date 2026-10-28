@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/useCurrentRouteInfo.ts"],"sourcesContent":[null],"names":["useCurrentRouteInfo","state","useStateForPath","useMemo","getRouteInfoFromState","undefined"],"mappings":"AAAA;;;;;+BAYgBA;;;eAAAA;;;;yBAVQ;;;;;;uCAEc;wBACN;AAOzB,SAASA;IACd,MAAMC,QAAQC,IAAAA,uBAAe;IAC7B,OAAOC,IAAAA,gBAAO,EAAC,IAAOF,QAAQG,IAAAA,4CAAqB,EAACH,SAASI,WAAY;QAACJ;KAAM;AAClF"}

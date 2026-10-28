@@ -1,0 +1,1 @@
+export declare const NativeBottomTabsRouter: (options: import("..").TabRouterOptions) => import("..").ExtendedRouter<import("..").TabNavigationState<import("../react-navigation").ParamListBase>, import("..").CommonNavigationAction | import("..").TabActionType>;

@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/material-top-tabs/index.tsx"],"sourcesContent":[null],"names":["MaterialTopTabBar","MaterialTopTabView","createStandardMaterialTopTabNavigator","useTabAnimation"],"mappings":";;;;;;;;;;;;;;;;;QAUSA;eAAAA,oCAAiB;;QACjBC;eAAAA,sCAAkB;;QANlBC;eAAAA,oEAAqC;;QAWrCC;eAAAA,gCAAe;;;oCAhBW;+CAKmB;mCAKpB;iCAMF"}

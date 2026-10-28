@@ -1,0 +1,182 @@
+// Copyright © 2018 650 Industries. All rights reserved.
+
+#import <ExpoModulesCore/EXDefines.h>
+#import <ExpoModulesCore/EXUtilities.h>
+#import <React/RCTLog.h>
+
+@interface EXUtilities ()
+
+@property (nonatomic, nullable, weak) EXModuleRegistry *moduleRegistry;
+
+@end
+
+@protocol EXUtilService
+
+- (UIViewController *)currentViewController;
+
+- (nullable NSDictionary *)launchOptions;
+
+@end
+
+@implementation EXUtilities
+
+EX_REGISTER_MODULE();
+
++ (const NSArray<Protocol *> *)exportedInterfaces
+{
+  return @[@protocol(EXUtilitiesInterface)];
+}
+
+- (void)setModuleRegistry:(EXModuleRegistry *)moduleRegistry
+{
+  _moduleRegistry = moduleRegistry;
+}
+
+- (nullable NSDictionary *)launchOptions
+{
+  id<EXUtilService> utilService = [_moduleRegistry getSingletonModuleForName:@"Util"];
+  return [utilService launchOptions];
+}
+
+- (UIViewController *)currentViewController
+{
+#if TARGET_OS_IOS || TARGET_OS_TV
+  id<EXUtilService> utilService = [_moduleRegistry getSingletonModuleForName:@"Util"];
+
+  if (utilService != nil) {
+    return [utilService currentViewController];
+  }
+
+  UIViewController *controller = [[[UIApplication sharedApplication] keyWindow] rootViewController];
+  UIViewController *presentedController = controller.presentedViewController;
+
+  while (presentedController && ![presentedController isBeingDismissed]) {
+    controller = presentedController;
+    presentedController = controller.presentedViewController;
+  }
+  return controller;
+#elif TARGET_OS_OSX
+  // Even though the function's return type is `UIViewController`, react-native-macos will alias `NSViewController` to `UIViewController`. 
+  return [[[NSApplication sharedApplication] keyWindow] contentViewController];
+#endif
+}
+
++ (void)performSynchronouslyOnMainThread:(void (^)(void))block
+{
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    dispatch_sync(dispatch_get_main_queue(), block);
+  }
+}
+
+// Kind of copied from RN to make UIColor:(id)json work
++ (NSArray<NSNumber *> *)NSNumberArray:(id)json
+{
+  return json;
+}
+
++ (NSNumber *)NSNumber:(id)json
+{
+  return json;
+}
+
++ (CGFloat)CGFloat:(id)json
+{
+  return [[self NSNumber:json] floatValue];
+}
+
++ (NSInteger)NSInteger:(id)json
+{
+  return [[self NSNumber:json] integerValue];
+}
+
++ (NSUInteger)NSUInteger:(id)json
+{
+  return [[self NSNumber:json] unsignedIntegerValue];
+}
+
+// Copied from RN
++ (UIColor *)UIColor:(id)json
+{
+  if (!json) {
+    return nil;
+  }
+  if ([json isKindOfClass:[NSArray class]]) {
+    NSArray *components = [self NSNumberArray:json];
+    CGFloat alpha = components.count > 3 ? [self CGFloat:components[3]] : 1.0;
+    return [UIColor colorWithRed:[self CGFloat:components[0]]
+                           green:[self CGFloat:components[1]]
+                            blue:[self CGFloat:components[2]]
+                           alpha:alpha];
+  } else if ([json isKindOfClass:[NSNumber class]]) {
+    NSUInteger argb = [self NSUInteger:json];
+    CGFloat a = ((argb >> 24) & 0xFF) / 255.0;
+    CGFloat r = ((argb >> 16) & 0xFF) / 255.0;
+    CGFloat g = ((argb >> 8) & 0xFF) / 255.0;
+    CGFloat b = (argb & 0xFF) / 255.0;
+    return [UIColor colorWithRed:r green:g blue:b alpha:a];
+  } else {
+    RCTLogInfo(@"%@ cannot be converted to a UIColor", json);
+    return nil;
+  }
+}
+
+// Copied from RN
++ (NSDate *)NSDate:(id)json
+{
+  if ([json isKindOfClass:[NSNumber class]]) {
+    return [NSDate dateWithTimeIntervalSince1970:[json doubleValue] / 1000.0];
+  } else if ([json isKindOfClass:[NSString class]]) {
+    static NSDateFormatter *formatter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      formatter = [NSDateFormatter new];
+      formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ";
+      formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+      formatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+    });
+    NSDate *date = [formatter dateFromString:json];
+    if (!date) {
+      RCTLogError(@"JSON String '%@' could not be interpreted as a date. "
+                  "Expected format: YYYY-MM-DD'T'HH:mm:ss.sssZ", json);
+    }
+    return date;
+  } else if (json) {
+    RCTLogError(json, @"a date");
+  }
+  return nil;
+}
+
+// https://stackoverflow.com/questions/14051807/how-can-i-get-a-hex-string-from-uicolor-or-from-rgb
++ (NSString *)hexStringWithCGColor:(CGColorRef)color
+{
+  const CGFloat *components = CGColorGetComponents(color);
+  size_t count = CGColorGetNumberOfComponents(color);
+
+  if (count == 2) {
+    return [NSString stringWithFormat:@"#%02lX%02lX%02lX",
+            lroundf(components[0] * 255.0),
+            lroundf(components[0] * 255.0),
+            lroundf(components[0] * 255.0)];
+  } else {
+    return [NSString stringWithFormat:@"#%02lX%02lX%02lX",
+            lroundf(components[0] * 255.0),
+            lroundf(components[1] * 255.0),
+            lroundf(components[2] * 255.0)];
+  }
+}
+
++ (BOOL)catchException:(void(^)(void))tryBlock error:(__autoreleasing NSError **)error
+{
+  @try {
+    tryBlock();
+    return YES;
+  }
+  @catch (NSException *exception) {
+    *error = [[NSError alloc] initWithDomain:exception.name code:0 userInfo:exception.userInfo];
+    return NO;
+  }
+}
+
+@end

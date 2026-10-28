@@ -1,0 +1,1 @@
+{"version":3,"sources":["StatusBar.ts"],"sourcesContent":[null],"names":["StatusBar","setStatusBarStyle","setStatusBarHidden","useVerticalBarEdgeIOS"],"mappings":"AAAA,SACEA,SAAS,EACTC,iBAAiB,EACjBC,kBAAkB,EAClBC,qBAAqB,QAChB,2BAA2B"}

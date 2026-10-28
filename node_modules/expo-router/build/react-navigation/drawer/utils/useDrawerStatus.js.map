@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/drawer/utils/useDrawerStatus.tsx"],"sourcesContent":[null],"names":["useDrawerStatus","drawerStatus","use","DrawerStatusContext","undefined","Error"],"mappings":"AAAA;;;;;+BAUgBA;;;eAAAA;;;;yBATI;;;;;;qCAGgB;AAM7B,SAASA;IACd,MAAMC,eAAeC,IAAAA,YAAG,EAACC,wCAAmB;IAE5C,IAAIF,iBAAiBG,WAAW;QAC9B,MAAM,IAAIC,MAAM;IAClB;IAEA,OAAOJ;AACT"}

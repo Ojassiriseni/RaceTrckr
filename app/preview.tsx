@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
+import MapView, { Circle, Marker, Polyline } from '../components/map-view';
 
 import { useRaceSettings } from '@/contexts/race-settings-context';
 
@@ -113,7 +113,16 @@ export default function Preview() {
 
   return (
     <View style={{ flex: 1 }}>
-      <MapView style={{ flex: 1 }}>
+      <MapView
+        key={`${startCoord?.latitude ?? 'default'}:${startCoord?.longitude ?? 'default'}`}
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: startCoord?.latitude ?? 37.78825,
+          longitude: startCoord?.longitude ?? -122.4324,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02
+        }}
+      >
         {routeCoords.length > 0 && (
           <Polyline
             coordinates={routeCoords}

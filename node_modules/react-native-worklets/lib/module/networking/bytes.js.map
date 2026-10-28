@@ -1,0 +1,1 @@
+{"version":3,"names":["toArrayBuffer","bytes","buffer","slice","byteOffset","byteLength"],"sourceRoot":"../../../src","sources":["networking/bytes.ts"],"mappings":"AAAA,YAAY;;AAEZ,OAAO,SAASA,aAAaA,CAACC,KAAiB,EAAe;EAC5D,OAAOA,KAAK,CAACC,MAAM,CAACC,KAAK,CACvBF,KAAK,CAACG,UAAU,EAChBH,KAAK,CAACG,UAAU,GAAGH,KAAK,CAACI,UAC3B,CAAC;AACH","ignoreList":[]}

@@ -1,4 +1,4 @@
-import { CreateURLOptions, ParsedURL } from './Linking.types';
+import type { CreateURLOptions, ParsedURL } from './Linking.types';
 
 export function createURL(path: string, { queryParams = {} }: CreateURLOptions = {}): string {
   if (typeof window === 'undefined') return '';
@@ -39,7 +39,7 @@ export function parse(url: string): ParsedURL {
   }
   const queryParams: Record<string, string> = {};
   parsed.searchParams.forEach((value, key) => {
-    queryParams[key] = decodeURIComponent(value);
+    queryParams[key] = value;
   });
   return {
     hostname: parsed.hostname || null,

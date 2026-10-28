@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/theming/ThemeProvider.tsx"],"sourcesContent":[null],"names":["ThemeProvider","value","children","ThemeContext","Provider"],"mappings":"AAAA;;;;;+BAUgBA;;;eAAAA;;;;;;;;;;;iEATO;;;;;;8BAEM;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAOtB,SAASA,cAAc,EAAEC,KAAK,EAAEC,QAAQ,EAAS;IACtD,qBAAO,uBAACC,0BAAY,CAACC,QAAQ;QAACH,OAAOA;kBAAQC;;AAC/C"}

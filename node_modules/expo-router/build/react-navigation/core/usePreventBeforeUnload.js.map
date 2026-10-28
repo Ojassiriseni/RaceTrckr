@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/usePreventBeforeUnload.tsx"],"sourcesContent":[null],"names":["usePreventBeforeUnload","NOOP","_preventBeforeUnload"],"mappings":";;;;+BAEgBA;;;eAAAA;;;AAFhB,MAAMC,OAAO,KAAO;AAEb,SAASD,uBAAuBE,oBAA6B;IAClE,OAAOD;AACT"}

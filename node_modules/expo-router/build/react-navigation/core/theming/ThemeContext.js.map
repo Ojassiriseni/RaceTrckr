@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/theming/ThemeContext.tsx"],"sourcesContent":[null],"names":["ThemeContext","React","createContext","undefined","displayName"],"mappings":"AAAA;;;;;+BAGaA;;;eAAAA;;;;iEAFU;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEhB,MAAMA,6BAAeC,SAAMC,aAAa,CAAoCC;AAEnFH,aAAaI,WAAW,GAAG"}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/useStateForPath.tsx"],"sourcesContent":[null],"names":["useStateForPath","state","use","NavigationFocusedRouteStateContext"],"mappings":"AAAA;;;;;+BAWgBA;;;eAAAA;;;;yBAVI;;;;;;oDAE+B;AAQ5C,SAASA;IACd,MAAMC,QAAQC,IAAAA,YAAG,EAACC,sEAAkC;IAEpD,OAAOF;AACT"}

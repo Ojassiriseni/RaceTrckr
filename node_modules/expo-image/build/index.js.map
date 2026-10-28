@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.ts"],"sourcesContent":[null],"names":["initObserveIntegrationIfNeeded","window","Image","ImageBackground","useImage"],"mappings":"AAAA,SAASA,8BAA8B,QAAQ,YAAY;AAE3D,8FAA8F;AAC9F,WAAW;AACX,IAAI,OAAOC,WAAW,aAAa;IACjCD;AACF;AAEA,cAAc,gBAAgB;AAC9B,SAASE,KAAK,QAAQ,UAAU;AAChC,SAASC,eAAe,QAAQ,oBAAoB;AACpD,SAASC,QAAQ,QAAQ,aAAa"}

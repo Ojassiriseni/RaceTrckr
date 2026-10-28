@@ -1,0 +1,87 @@
+export { createNavigationContainerRef } from './createNavigationContainerRef';
+export { createNavigatorFactory } from './createNavigatorFactory';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { CurrentRenderContext } from './CurrentRenderContext';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { findFocusedRoute } from '../../fork/findFocusedRoute';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { getFocusedRouteNameFromRoute } from './getFocusedRouteNameFromRoute';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { getPathFromState } from '../../fork/getPathFromState';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { getStateFromPath } from '../../fork/getStateFromPath';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { NavigationContainerRefContext } from './NavigationContainerRefContext';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { NavigationContext } from './NavigationContext';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { NavigationHelpersContext } from './NavigationHelpersContext';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { NavigationMetaContext } from './NavigationMetaContext';
+export { NavigatorTypeContext } from './NavigatorTypeContext';
+export { NavigationProvider } from './NavigationProvider';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { NavigationRouteContext } from './NavigationProvider';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { ThemeContext } from './theming/ThemeContext';
+/**
+ * @deprecated Import `ThemeProvider` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { ThemeProvider } from './theming/ThemeProvider';
+/**
+ * @deprecated Import `useTheme` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { useTheme } from './theming/useTheme';
+export * from './types';
+/**
+ * @deprecated Import `useFocusEffect` from `expo-router` instead — it is typed for the
+ * Expo Router route tree. Will be removed in a future SDK.
+ */
+export { useFocusEffect } from './useFocusEffect';
+/**
+ * @deprecated Import `useIsFocused` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { useIsFocused } from './useIsFocused';
+/**
+ * @deprecated Import `useNavigation` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { useNavigation } from './useNavigation';
+export { useNavigationBuilder } from './useNavigationBuilder';
+/**
+ * @deprecated Import `useNavigationContainerRef` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { useNavigationContainerRef } from './useNavigationContainerRef';
+export { useNavigationState } from './useNavigationState';
+export { type PreventRemoveOptions, usePreventRemove } from './usePreventRemove';
+/**
+ * @deprecated Import `useRoute` from `expo-router` instead. Will be removed in a future SDK.
+ */
+export { useRoute } from './useRoute';
+export { useStateForPath } from './useStateForPath';
+/**
+ * @deprecated Will be removed in a future SDK.
+ */
+export { validatePathConfig } from '../../fork/validatePathConfig';
+export * from '../routers';

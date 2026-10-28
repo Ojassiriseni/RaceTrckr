@@ -1,0 +1,1 @@
+{"version":3,"names":["setupQueueMicrotask","globalThis","queueMicrotask","HermesInternal","enqueueJob"],"sourceRoot":"../../../../src","sources":["runLoop/common/queueMicrotaskPolyfill.ts"],"mappings":"AAAA,YAAY;;AAEZ;AAIA,OAAO,SAASA,mBAAmBA,CAAA,EAAG;EACpC,SAAS;;EACTC,UAAU,CAACC,cAAc,GACtBD,UAAU,CAA6BE,cAAc,CACtDC,UAAU;AACd","ignoreList":[]}

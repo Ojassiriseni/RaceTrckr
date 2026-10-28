@@ -1,0 +1,1 @@
+{"version":3,"sources":["global-state/routeInfoContext.ts"],"sourcesContent":[null],"names":["RouteInfoContext","createContext","defaultRouteInfo"],"mappings":"AAAA;;;;;+BAMaA;;;eAAAA;;;;yBAJiB;;;;;;uCAEG;AAE1B,MAAMA,mBAAmBC,IAAAA,sBAAa,EAACC,uCAAgB"}

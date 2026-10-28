@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/routers/createRouteFromAction.tsx"],"sourcesContent":[null],"names":["createRouteFromAction","action","key","name","params","payload"],"mappings":";;;;+BAUgBA;;;eAAAA;;;AAAT,SAASA,sBAAsB,EAAEC,MAAM,EAAEC,GAAG,EAAW;IAC5D,MAAM,EAAEC,IAAI,EAAEC,MAAM,EAAE,GAAGH,OAAOI,OAAO;IAEvC,OAAO;QACLH;QACAC;QACAC;IACF;AACF"}

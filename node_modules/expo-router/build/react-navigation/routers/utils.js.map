@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/routers/utils.ts"],"sourcesContent":[null],"names":["isActionHandled","result","RouterActionHandling","Unhandled"],"mappings":";;;;+BAegBA;;;eAAAA;;;uBAfoE;AAe7E,SAASA,gBACdC,MAAyE;IAEzE,OAAOA,WAAW,QAAQA,WAAWC,2BAAoB,CAACC,SAAS;AACrE"}

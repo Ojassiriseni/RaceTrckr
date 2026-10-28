@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/useReleasingSharedObject.ts"],"sourcesContent":[null],"names":["useReleasingSharedObjectWithLifecycle","useReleasingSharedObject","factory","dependencies"],"mappings":"AAAA;AAKA,SAASA,qCAAqC,QAAQ,0CAA0C;AAEhG;;CAEC,GACD,OAAO,SAASC,yBACdC,OAA4B,EAC5BC,YAA4B;IAE5B,OAAOH,sCACL;QACEE;IACF,GACAC;AAEJ"}

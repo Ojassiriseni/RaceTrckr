@@ -1,0 +1,93 @@
+// WARN(@kitten): We must ensure that the core react-native globals are initialized before ours
+// Otherwise we're relying on `getModulesRunBeforeMainModule` which is unstable or can be missing
+// See: `expo/winter/runtime.native.ts`
+import 'react-native/setup-env';
+// Ensure fetch is installed before adding our fetch polyfill to ensure Headers and Request are available globally.
+import 'whatwg-fetch';
+// This MUST be imported to ensure URL is installed.
+import 'expo';
+// This file configures the runtime environment to increase compatibility with WinterCG.
+// https://wintercg.org/
+import Constants from 'expo-constants';
+import { getBundleOrigin } from 'expo/internal/bundle-origin';
+import { install, setLocationHref } from './Location';
+const manifest = Constants.expoConfig;
+function getOrigin() {
+    if (process.env.NODE_ENV !== 'production') {
+        // In development, we serve from the bundle's origin, unless it's unavailable
+        const bundleOrigin = getBundleOrigin();
+        if (bundleOrigin) {
+            return bundleOrigin;
+        }
+    }
+    // In production or otherwise, we always use the configured origin
+    const extra = manifest?.extra;
+    return extra?.router?.origin ?? // Written automatically during release builds.
+    extra?.router?.generatedOrigin;
+}
+// TODO: This would be better if native and tied as close to the JS engine as possible, i.e. it should
+// reflect the exact location of the JS file that was executed.
+function getBaseUrl() {
+    // TODO: Make it official by moving out of `extra`
+    const productionBaseUrl = getOrigin();
+    if (!productionBaseUrl) {
+        return null;
+    }
+    // Ensure no trailing slash
+    return productionBaseUrl?.replace(/\/$/, '');
+}
+const polyfillSymbol = Symbol.for('expo.polyfillFetchWithWindowLocation');
+const builtinSymbol = Symbol.for('expo.builtin');
+export function wrapFetchWithWindowLocation(fetch1) {
+    if (fetch1[polyfillSymbol]) {
+        return fetch1;
+    }
+    const _fetch = (...props)=>{
+        // `window.location` is unset when the bundle wasn't served over HTTP and the app configures no
+        // origin. A relative URL is then passed through, so the request fails on its own terms instead of
+        // throwing "Invalid URL" from here.
+        const origin = typeof window !== 'undefined' ? window.location?.origin : undefined;
+        if (origin) {
+            if (props[0] && typeof props[0] === 'string' && props[0].startsWith('/')) {
+                props[0] = new URL(props[0], origin).toString();
+            } else if (props[0] && typeof props[0] === 'object') {
+                if (props[0].url && typeof props[0].url === 'string' && props[0].url.startsWith('/')) {
+                    props[0].url = new URL(props[0].url, origin).toString();
+                }
+            }
+        }
+        return fetch1(...props);
+    };
+    _fetch[polyfillSymbol] = true;
+    if (fetch1[builtinSymbol] === true) {
+        Object.defineProperty(_fetch, builtinSymbol, {
+            value: true,
+            enumerable: false,
+            configurable: false
+        });
+    }
+    return _fetch;
+}
+const extra = manifest?.extra;
+if (extra?.router?.origin !== false) {
+    // Polyfill window.location in native runtimes.
+    if (typeof window !== 'undefined' && !window.location) {
+        const url = getBaseUrl();
+        if (url) {
+            setLocationHref(url);
+            install();
+        }
+    }
+    // Polyfill native fetch to support relative URLs
+    Object.defineProperty(global, 'fetch', {
+        // value: fetch,
+        value: wrapFetchWithWindowLocation(fetch)
+    });
+} else {
+    // Polyfill native fetch to support relative URLs
+    Object.defineProperty(global, 'fetch', {
+        value: fetch
+    });
+}
+
+//# sourceMappingURL=install.native.js.map

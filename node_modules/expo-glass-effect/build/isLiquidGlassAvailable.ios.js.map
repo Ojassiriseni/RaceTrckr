@@ -1,0 +1,1 @@
+{"version":3,"sources":["isLiquidGlassAvailable.ios.ts"],"sourcesContent":[null],"names":["requireNativeModule","IS_LIQUID_GLASS_AVAILABLE","isLiquidGlassAvailable","undefined"],"mappings":"AAAA,SAASA,mBAAmB,QAAQ,OAAO;AAE3C,IAAIC;AAEJ;;;;;;;;;;CAUC,GACD,OAAO,SAASC;IACd,IAAID,8BAA8BE,WAAW;QAC3CF,4BAA4BD,oBAAoB,mBAAmBE,sBAAsB;IAC3F;IACA,OAAO,CAAC,CAACD;AACX"}

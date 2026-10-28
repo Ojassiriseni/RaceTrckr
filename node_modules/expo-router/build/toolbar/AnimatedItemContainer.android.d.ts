@@ -1,0 +1,8 @@
+import type { ReactNode } from 'react';
+/**
+ * Shared animated container for Android toolbar items.
+ */
+export declare function AnimatedItemContainer({ visible, children, }: {
+    visible: boolean;
+    children: ReactNode;
+}): import("react").JSX.Element;

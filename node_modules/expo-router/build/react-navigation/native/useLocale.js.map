@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/native/useLocale.tsx"],"sourcesContent":[null],"names":["useLocale","direction","use","LocaleDirContext","undefined","Error"],"mappings":"AAAA;;;;;+BAQgBA;;;eAAAA;;;;yBAPI;;;;;;kCAEa;AAK1B,SAASA;IACd,MAAMC,YAAYC,IAAAA,YAAG,EAACC,kCAAgB;IAEtC,IAAIF,cAAcG,WAAW;QAC3B,MAAM,IAAIC,MACR;IAEJ;IAEA,OAAO;QAAEJ;IAAU;AACrB"}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["hooks/usePathname.ts"],"sourcesContent":[null],"names":["usePathname","useRouteInfo","pathname"],"mappings":"AAAA;;;;;+BAqBgBA;;;eAAAA;;;8BAnBa;AAmBtB,SAASA;IACd,OAAOC,IAAAA,0BAAY,IAAGC,QAAQ;AAChC"}

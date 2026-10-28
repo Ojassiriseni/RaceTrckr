@@ -1,0 +1,1 @@
+{"version":3,"sources":["react-navigation/core/NavigationStateContext.tsx"],"sourcesContent":[null],"names":["NavigationStateContext","React","createContext","isDefault"],"mappings":"AAAA;;;;;+BAKaA;;;eAAAA;;;;iEAJU;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAIhB,MAAMA,uCAAyBC,SAAMC,aAAa,CAItD;IACDC,WAAW;AACb"}

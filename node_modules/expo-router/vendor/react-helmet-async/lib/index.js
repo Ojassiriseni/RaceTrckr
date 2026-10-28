@@ -37,7 +37,6 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 var import_react4 = __toESM(require("react"));
 var import_react_fast_compare = __toESM(require("react-fast-compare"));
-var import_invariant = __toESM(require("invariant"));
 
 // src/Provider.tsx
 var import_react2 = __toESM(require("react"));
@@ -292,7 +291,7 @@ var encodeSpecialCharacters = (str, encode = true) => {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 };
 var generateElementAttributesAsString = (attributes) => Object.keys(attributes).reduce((str, key) => {
-  const attr = typeof attributes[key] !== "undefined" ? `${key}="${attributes[key]}"` : `${key}`;
+  const attr = typeof attributes[key] !== "undefined" ? `${key}="${encodeSpecialCharacters(attributes[key])}"` : `${key}`;
   return str ? `${str} ${attr}` : attr;
 }, "");
 var generateTitleAsString = (type, title, attributes, encode) => {
@@ -490,7 +489,22 @@ var HelmetProvider = class _HelmetProvider extends import_react2.Component {
 
 // src/Dispatcher.tsx
 var import_react3 = require("react");
-var import_shallowequal = __toESM(require("shallowequal"));
+var shallowEqual = (objA, objB) => {
+  if (objA === objB) {
+    return true;
+  }
+  if (typeof objA !== "object" || !objA || typeof objB !== "object" || !objB) {
+    return false;
+  }
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+  return keysA.every(
+    (key) => Object.prototype.hasOwnProperty.call(objB, key) && objA[key] === objB[key]
+  );
+};
 
 // src/client.ts
 var updateTags = (type, tags) => {
@@ -637,7 +651,7 @@ var client_default = handleStateChangeOnClient;
 var HelmetDispatcher = class extends import_react3.Component {
   rendered = false;
   shouldComponentUpdate(nextProps) {
-    return !(0, import_shallowequal.default)(nextProps, this.props);
+    return !shallowEqual(nextProps, this.props);
   }
   componentDidUpdate() {
     this.emitChange();
@@ -760,16 +774,18 @@ var Helmet = class extends import_react4.Component {
     return newFlattenedProps;
   }
   warnOnInvalidChildren(child, nestedChildren) {
-    (0, import_invariant.default)(
-      VALID_TAG_NAMES.some((name) => child.type === name),
-      typeof child.type === "function" ? `You may be attempting to nest <Helmet> components within each other, which is not allowed. Refer to our API for more information.` : `Only elements types ${VALID_TAG_NAMES.join(
+    if (!VALID_TAG_NAMES.some((name) => child.type === name)) {
+      throw new Error(
+        typeof child.type === "function" ? `You may be attempting to nest <Helmet> components within each other, which is not allowed. Refer to our API for more information.` : `Only elements types ${VALID_TAG_NAMES.join(
         ", "
       )} are allowed. Helmet does not support rendering <${child.type}> elements. Refer to our API for more information.`
-    );
-    (0, import_invariant.default)(
-      !nestedChildren || typeof nestedChildren === "string" || Array.isArray(nestedChildren) && !nestedChildren.some((nestedChild) => typeof nestedChild !== "string"),
-      `Helmet expects a string as a child of <${child.type}>. Did you forget to wrap your children in braces? ( <${child.type}>{\`\`}</${child.type}> ) Refer to our API for more information.`
-    );
+      );
+    }
+    if (nestedChildren && typeof nestedChildren !== "string" && (!Array.isArray(nestedChildren) || nestedChildren.some((nestedChild) => typeof nestedChild !== "string"))) {
+      throw new Error(
+        `Helmet expects a string as a child of <${child.type}>. Did you forget to wrap your children in braces? ( <${child.type}>{\`\`}</${child.type}> ) Refer to our API for more information.`
+      );
+    }
     return true;
   }
   mapChildrenToProps(children, newProps) {

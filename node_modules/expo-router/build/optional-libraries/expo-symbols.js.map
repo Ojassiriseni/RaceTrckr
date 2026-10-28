@@ -1,0 +1,1 @@
+{"version":3,"sources":["optional-libraries/expo-symbols.ts"],"sourcesContent":[null],"names":["requireExpoSymbols","expoSymbols","require","errorMessage","Error"],"mappings":";;;;+BAQgBA;;;eAAAA;;;AANhB,IAAIC;AAEJ,IAAI;IACFA,cAAcC,QAAQ;AACxB,EAAE,OAAM,CAAC;AAEF,SAASF,mBACdG,eAAe,gFAAgF;IAE/F,IAAI,CAACF,aAAa;QAChB,MAAM,IAAIG,MAAMD;IAClB;IACA,OAAOF;AACT"}

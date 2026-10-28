@@ -1,0 +1,1 @@
+{"version":3,"sources":["global-state/routingQueue.ts"],"sourcesContent":[null],"names":["markActionEnqueuedAndReturnId","lastActionId","actionId","mark"],"mappings":";;;;+BA8CgBA;;;eAAAA;;;6BA9CK;AA2CrB,IAAIC,eAAe;AAGZ,SAASD;IACd,MAAME,WAAW,EAAED;IACnBE,IAAAA,iBAAI,EAAC,+BAA+B;QAAED;IAAS;IAC/C,OAAOA;AACT"}

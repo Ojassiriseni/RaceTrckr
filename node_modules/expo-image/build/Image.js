@@ -1,0 +1,270 @@
+'use client';
+import { jsx as _jsx } from "react/jsx-runtime";
+import { Platform, createSnapshotFriendlyRef } from 'expo';
+import React from 'react';
+import { StyleSheet, processColor } from 'react-native';
+import ExpoImage from './ExpoImage';
+import ImageModule from './ImageModule';
+import { resolveContentFit, resolveContentPosition, resolveTransition } from './utils';
+import { resolveSource, resolveSources } from './utils/resolveSources';
+/**
+ * Normalizes the `sfEffect` prop to always be an array of `SFSymbolEffectObject`.
+ * Supports: string, object, or array of strings/objects.
+ */ function resolveSfEffect(sfEffect) {
+    if (sfEffect == null) {
+        return null;
+    }
+    // Convert to array if not already
+    const effectsArray = Array.isArray(sfEffect) ? sfEffect : [
+        sfEffect
+    ];
+    // Normalize each item to SFSymbolEffectObject
+    return effectsArray.map((item)=>{
+        if (typeof item === 'string') {
+            return {
+                effect: item
+            };
+        }
+        return item;
+    });
+}
+/**
+ * Normalizes `svgVariables` values to strings. They are substituted into the SVG document as text,
+ * but numbers are accepted for convenience so that lengths and opacities don't have to be quoted.
+ *
+ * @hidden Exported for tests.
+ */ export function resolveSvgVariables(svgVariables) {
+    if (svgVariables == null) {
+        return null;
+    }
+    return Object.fromEntries(Object.entries(svgVariables).map(([name, value])=>{
+        if (__DEV__ && !name.startsWith('--')) {
+            console.warn(`The \`svgVariables\` key "${name}" is not a CSS custom property and will be ignored. ` + `Custom properties start with two dashes, so use "--${name}" if that is what the SVG declares.`);
+        }
+        return [
+            name,
+            String(value)
+        ];
+    }));
+}
+let loggedDefaultSourceDeprecationWarning = false;
+let loggedRenderingChildrenWarning = false;
+export class Image extends React.PureComponent {
+    nativeViewRef;
+    containerViewRef;
+    constructor(props){
+        super(props);
+        this.nativeViewRef = createSnapshotFriendlyRef();
+        this.containerViewRef = createSnapshotFriendlyRef();
+    }
+    // Reanimated support on web
+    getAnimatableRef = ()=>{
+        if (Platform.OS === 'web') {
+            return this.containerViewRef.current;
+        } else {
+            return this;
+        }
+    };
+    /**
+   * @hidden
+   */ static Image = ImageModule.Image;
+    static async prefetch(urls, options) {
+        let cachePolicy = 'memory-disk';
+        let headers;
+        switch(typeof options){
+            case 'string':
+                cachePolicy = options;
+                break;
+            case 'object':
+                cachePolicy = options.cachePolicy ?? cachePolicy;
+                headers = options.headers;
+                break;
+        }
+        return ImageModule.prefetch(Array.isArray(urls) ? urls : [
+            urls
+        ], cachePolicy, headers);
+    }
+    /**
+   * Asynchronously clears all images stored in memory.
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to `true` when the operation succeeds.
+   * It may resolve to `false` on Android when the activity is no longer available.
+   * Resolves to `false` on Web.
+   */ static async clearMemoryCache() {
+        return await ImageModule.clearMemoryCache();
+    }
+    /**
+   * Asynchronously clears all images from the disk cache.
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to `true` when the operation succeeds.
+   * It may resolve to `false` on Android when the activity is no longer available.
+   * Resolves to `false` on Web.
+   */ static async clearDiskCache() {
+        return await ImageModule.clearDiskCache();
+    }
+    /**
+   * Asynchronously checks if an image exists in the disk cache and resolves to
+   * the path of the cached image if it does.
+   * @param cacheKey - The cache key for the requested image. Unless you have set
+   * a custom cache key, this will be the source URL of the image.
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to the path of the cached image. It will resolve
+   * to `null` if the image does not exist in the cache.
+   */ static async getCachePathAsync(cacheKey) {
+        return await ImageModule.getCachePathAsync(cacheKey);
+    }
+    /**
+   * Asynchronously writes a local image to the disk cache under the given cache key,
+   * without fetching it over the network. Use this to seed the cache from an image you
+   * already have on the device, for example one returned by `expo-image-picker` or
+   * downloaded with `expo-file-system`. A later image load that uses the same `cacheKey`
+   * in its [`source`](#imagesource) will then be served straight from the cache.
+   * @param source - The image to cache, either a local file URI (`string`) or an [`ImageRef`](#imageref).
+   * > **Note:** Caching an animated image (GIF, APNG, animated WebP) from an `ImageRef` flattens
+   * > it to a single frame, because the reference holds the decoded image rather than the original
+   * > encoded bytes. To seed an animated image losslessly, pass its local file URI instead.
+   * @param cacheKey - The cache key to store the image under. Pass the same value in the
+   * `cacheKey` of the [`source`](#imagesource) when you later render the image.
+   * @platform android
+   * @platform ios
+   * @return A promise that resolves once the image has been written to the disk cache.
+   */ static async writeToCacheAsync(source, cacheKey) {
+        return await ImageModule.writeToCacheAsync(source, cacheKey);
+    }
+    /**
+   * Asynchronously reads an image stored in the cache under the given cache key and resolves to
+   * an [`ImageRef`](#imageref) that can be passed straight to the [`source`](#imagesource) of an
+   * image view. Resolves to `null` when no image is cached for the key.
+   * @param cacheKey - The cache key to read the image from. Unless you have set a custom cache key,
+   * this is the source URL of the image.
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to the cached image reference, or `null` if it isn't cached.
+   */ static async readFromCacheAsync(cacheKey) {
+        return await ImageModule.readFromCacheAsync(cacheKey);
+    }
+    /**
+   * Configures the image cache. This allows you to manage the cache eviction policy.
+   * @param config - The cache configuration.
+   * @platform ios
+   */ static configureCache(config) {
+        return ImageModule.configureCache(config);
+    }
+    /**
+   * Asynchronously generates a [Blurhash](https://blurha.sh) from an image.
+   * @param source - The image source, either a URL (string) or an ImageRef
+   * @param numberOfComponents - The number of components to encode the blurhash with.
+   * Must be between 1 and 9. Defaults to `[4, 3]`.
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to the blurhash string.
+   */ static async generateBlurhashAsync(source, numberOfComponents) {
+        return ImageModule.generateBlurhashAsync(source, numberOfComponents);
+    }
+    /**
+   * Asynchronously generates a [Thumbhash](https://evanw.github.io/thumbhash/) from an image.
+   * @param source - The image source, either a URL (string) or an ImageRef
+   * @platform android
+   * @platform ios
+   * @return A promise resolving to the thumbhash string.
+   */ static async generateThumbhashAsync(source) {
+        return ImageModule.generateThumbhashAsync(source);
+    }
+    /**
+   * Asynchronously starts playback of the view's image if it is animated.
+   * @platform android
+   * @platform ios
+   */ async startAnimating() {
+        await this.nativeViewRef.current?.startAnimating();
+    }
+    /**
+   * Asynchronously stops the playback of the view's image if it is animated.
+   * @platform android
+   * @platform ios
+   */ async stopAnimating() {
+        await this.nativeViewRef.current?.stopAnimating();
+    }
+    /**
+   * Prevents the resource from being reloaded by locking it.
+   * @platform android
+   * @platform ios
+   */ async lockResourceAsync() {
+        await this.nativeViewRef.current?.lockResourceAsync();
+    }
+    /**
+   * Releases the lock on the resource, allowing it to be reloaded.
+   * @platform android
+   * @platform ios
+   */ async unlockResourceAsync() {
+        await this.nativeViewRef.current?.unlockResourceAsync();
+    }
+    /**
+   * Reloads the resource, ignoring lock.
+   * @platform android
+   * @platform ios
+   */ async reloadAsync() {
+        await this.nativeViewRef.current?.reloadAsync();
+    }
+    /**
+   * Loads an image from the given source to memory and resolves to
+   * an object that references the native image instance.
+   *
+   * On Android, when neither `maxWidth` nor `maxHeight` is provided, large images may be
+   * downsampled to fit the platform's bitmap size limit. The returned `ImageRef.width` and
+   * `ImageRef.height` reflect the decoded size and may differ from the original dimensions or iOS.
+   * @platform android
+   * @platform ios
+   * @platform web
+   */ static async loadAsync(source, options) {
+        const resolvedSource = resolveSource(source);
+        const resolvedOptions = options?.tintColor ? {
+            ...options,
+            tintColor: processColor(options.tintColor)
+        } : options;
+        return await ImageModule.loadAsync(resolvedSource, resolvedOptions);
+    }
+    render() {
+        const { style, source, placeholder, contentFit, contentPosition, transition, fadeDuration, resizeMode: resizeModeProp, defaultSource, loadingIndicatorSource, sfEffect, ...restProps } = this.props;
+        const { resizeMode: resizeModeStyle, fontWeight: fontWeightStyle, color: colorStyle, fontSize: fontSizeStyle, ...restStyle } = StyleSheet.flatten(style) || {};
+        const resizeMode = resizeModeProp ?? resizeModeStyle;
+        if ((defaultSource || loadingIndicatorSource) && !loggedDefaultSourceDeprecationWarning) {
+            console.warn('[expo-image]: `defaultSource` and `loadingIndicatorSource` props are deprecated, use `placeholder` instead');
+            loggedDefaultSourceDeprecationWarning = true;
+        }
+        // @ts-expect-error
+        if (restProps.children && !loggedRenderingChildrenWarning) {
+            console.warn('The <Image> component does not support children. If you want to render content on top of the image, consider using the <ImageBackground> component or absolute positioning.');
+            loggedRenderingChildrenWarning = true;
+        }
+        // Resolve sources
+        const resolvedSource = resolveSources(source);
+        const isSFSymbol = Array.isArray(resolvedSource) && resolvedSource.some((s)=>s?.uri?.startsWith('sf:/'));
+        // For SF Symbols, fontSize sets both the symbol point size and container dimensions
+        const resolvedStyle = isSFSymbol && fontSizeStyle ? {
+            width: fontSizeStyle,
+            height: fontSizeStyle,
+            ...restStyle
+        } : restStyle;
+        return /*#__PURE__*/ _jsx(ExpoImage, {
+            ...restProps,
+            style: resolvedStyle,
+            source: resolvedSource,
+            placeholder: resolveSources(placeholder ?? defaultSource ?? loadingIndicatorSource),
+            contentFit: resolveContentFit(contentFit, resizeMode, isSFSymbol),
+            contentPosition: resolveContentPosition(contentPosition),
+            transition: resolveTransition(transition, fadeDuration),
+            sfEffect: resolveSfEffect(sfEffect),
+            svgVariables: resolveSvgVariables(restProps.svgVariables),
+            tintColor: isSFSymbol && colorStyle && !restProps.tintColor ? colorStyle : restProps.tintColor,
+            symbolWeight: isSFSymbol ? typeof fontWeightStyle === 'number' ? String(fontWeightStyle) : fontWeightStyle : null,
+            symbolSize: isSFSymbol && fontSizeStyle ? fontSizeStyle : null,
+            nativeViewRef: this.nativeViewRef,
+            containerViewRef: this.containerViewRef
+        });
+    }
+}
+
+//# sourceMappingURL=Image.js.map
