@@ -151,7 +151,7 @@ export default function Home() {
             <Text style={styles.eyebrow}>GPS</Text>
             <View style={styles.liveDot} />
           </View>
-          <Text style={styles.heroTitle}>READY TO RUN?</Text>
+          <Text style={styles.heroTitle}>Start</Text>
           <Text style={styles.heroSubtitle}>Build your route. Record your run.</Text>
 
           <View style={styles.routeGraphic}>
@@ -397,7 +397,7 @@ const styles: Record<string, any> = {
     height: 116,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#2B3744',
+    borderColor: '#49525b8e',
     backgroundColor: '#0D151A',
     position: 'relative',
     marginBottom: 18,
@@ -410,7 +410,7 @@ const styles: Record<string, any> = {
     top: '28%',
     bottom: '28%',
     borderRadius: 999,
-    backgroundColor: 'rgba(199,255,53,0.18)',
+    backgroundColor: 'rgba(53, 198, 255, 0.09)',
   },
   routeLine: {
     position: 'absolute',

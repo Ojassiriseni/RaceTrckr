@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     borderColor: '#2A3745',
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     marginRight: 0,
   },
   homeButtonText: {
