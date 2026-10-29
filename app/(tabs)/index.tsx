@@ -135,26 +135,24 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.wordmark}>GR86</Text>
-          </View>
+          <Text style={styles.wordmark}>RaceTrckr</Text>
           <TouchableOpacity style={styles.statusPill} onPress={() => router.push('/pin-setup')}>
             <Text style={styles.statusText}>{user ? 'GPS live' : 'Sign in'}</Text>
           </TouchableOpacity>
         </View>
 
         <LinearGradient
-          colors={['#131D26', '#0D141A', '#090E13']}
+          colors={['#0C141A', '#070D13', '#050B12']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
           <View style={styles.heroHeaderRow}>
-            <Text style={styles.eyebrow}>Telemetry</Text>
+            <Text style={styles.eyebrow}>GPS</Text>
             <View style={styles.liveDot} />
           </View>
-          <Text style={styles.heroTitle}>Track ready</Text>
-          <Text style={styles.heroSubtitle}>Build your run, pin the route, and chase the fastest lap.</Text>
+          <Text style={styles.heroTitle}>READY TO RUN?</Text>
+          <Text style={styles.heroSubtitle}>Build your route. Record your run.</Text>
 
           <View style={styles.routeGraphic}>
             <View style={styles.routeGlow} />
@@ -165,14 +163,8 @@ export default function Home() {
             <View style={styles.routeHudEnd} />
           </View>
 
-          <View style={styles.heroPillsRow}>
-            <View style={styles.heroPill}><Text style={styles.heroPillText}>GPS live</Text></View>
-            <View style={styles.heroPill}><Text style={styles.heroPillText}>route set</Text></View>
-            <View style={styles.heroPill}><Text style={styles.heroPillText}>best runs</Text></View>
-          </View>
-
           <TouchableOpacity style={styles.primaryButton} onPress={goPreview}>
-            <Text style={styles.primaryButtonText}>Start new run</Text>
+            <Text style={styles.primaryButtonText}>Create new run</Text>
           </TouchableOpacity>
         </LinearGradient>
 

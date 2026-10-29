@@ -11,12 +11,14 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0B1016',
-          borderTopColor: '#1D2733',
+          backgroundColor: '#070D14',
+          borderTopColor: '#1B2734',
           borderTopWidth: 1,
           height: 74,
           paddingBottom: 10,
-          paddingTop: 8
+          paddingTop: 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.muted,
