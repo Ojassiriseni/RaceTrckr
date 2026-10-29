@@ -167,7 +167,8 @@ const title = {
   color: '#fff',
   fontSize: 28,
   fontWeight: '800' as const,
-  marginBottom: 4
+  marginBottom: 4,
+  marginTop: 12,
 };
 const sub = { color: theme.colors.muted, fontSize: 14, marginBottom: 20 };
 const muted = { color: theme.colors.muted, fontSize: 15, lineHeight: 22 };

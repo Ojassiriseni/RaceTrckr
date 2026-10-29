@@ -328,6 +328,7 @@ const styles: Record<string, any> = {
     fontWeight: '800',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
+    marginTop: 14,
   },
   statusPill: {
     backgroundColor: '#111B23',
@@ -336,6 +337,7 @@ const styles: Record<string, any> = {
     borderRadius: theme.radii.pill,
     paddingHorizontal: 10,
     paddingVertical: 8,
+    marginTop: 14,
   },
   statusText: {
     color: theme.colors.primary,
