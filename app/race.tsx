@@ -81,6 +81,7 @@ export default function Race() {
   const [bestSpeed, setBestSpeed] = useState(0);
 
   const [startTime, setStartTime] = useState<number|null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const [elapsedTime,setElapsedTime] = useState(0);
  
   const [finished, setFinished] = useState(false);
@@ -104,6 +105,10 @@ export default function Race() {
     lapTimesSecRef.current = [];
     setLapTimesSec([]);
   };
+
+  useEffect(() => {
+    startTimeRef.current = startTime;
+  }, [startTime]);
 
   const commitFinish = useCallback(
     (
@@ -299,6 +304,7 @@ export default function Race() {
               const now = Date.now();
               if (currentLapStartRef.current == null) {
                 currentLapStartRef.current = now;
+                startTimeRef.current = now;
                 setStartTime(now);
               } else if (!finishTriggered.current) {
                 const lapSec = (now - currentLapStartRef.current) / 1000;
@@ -309,16 +315,18 @@ export default function Race() {
               }
             }
           } else if (!lapMode) {
-            if (armed && !startTime && startCoord) {
+            if (armed && startTimeRef.current == null && startCoord) {
               const distToStart = getDistance(c, startCoord);
               if (distToStart < startZoneM) {
-                setStartTime(Date.now());
+                const now = Date.now();
+                startTimeRef.current = now;
+                setStartTime(now);
               }
             }
           }
 
-          if (startTime) {
-            setElapsedTime(Date.now() - startTime);
+          if (startTimeRef.current != null) {
+            setElapsedTime(Date.now() - startTimeRef.current);
           }
 
           let speed = 0;
@@ -345,12 +353,12 @@ export default function Race() {
           if (
             !lapMode &&
             !finishTriggered.current &&
-            startTime &&
+            startTimeRef.current != null &&
             endCoord
           ) {
             const dist = getDistance(c, endCoord);
             if (dist < endZoneM) {
-              const final = Date.now() - startTime;
+              const final = Date.now() - startTimeRef.current;
               const bestKmh = speeds.current.length
                 ? Math.max(...speeds.current)
                 : 0;
@@ -370,7 +378,6 @@ export default function Race() {
 
     return () => sub && sub.remove();
   }, [
-    startTime,
     finished,
     startCoord,
     endCoord,
