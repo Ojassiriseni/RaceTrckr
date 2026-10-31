@@ -11,6 +11,14 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
 };
 
+const defaultAuthContext: AuthContextValue = {
+  user: null,
+  loading: false,
+  signIn: async () => ({ ok: false, error: 'Auth provider is unavailable.' }),
+  signUp: async () => ({ ok: false, error: 'Auth provider is unavailable.' }),
+  signOut: async () => undefined,
+};
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -64,6 +72,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  return ctx ?? defaultAuthContext;
 }
