@@ -35,7 +35,7 @@ export default function ProfileTab() {
         setPassword('');
         Alert.alert(
           mode === 'signup' ? 'Welcome' : 'Signed in',
-          'Your race data will be saved to this device.'
+          'Your race data will be synced to your RaceTrckr account.'
         );
       } else {
         Alert.alert('Could not continue', res.error);
@@ -64,7 +64,7 @@ export default function ProfileTab() {
             <Text style={styles.label}>Signed in as</Text>
             <Text style={styles.emailText}>{user.email}</Text>
             <Text style={styles.hint}>
-              Accounts and runs are stored on this device. Export from the Data tab for a backup.
+              Your account and runs are synced through Supabase. Export from the Data tab for a backup.
             </Text>
           </View>
 
@@ -87,7 +87,7 @@ export default function ProfileTab() {
         <Text style={styles.subtitle}>
           {mode === 'signin'
             ? 'Sign in to save completed races and keep a personal lap history.'
-            : 'Create an account stored on this device to sync your race data.'}
+            : 'Create an account to sync your race data to the cloud.'}
         </Text>
 
         <View style={styles.formCard}>

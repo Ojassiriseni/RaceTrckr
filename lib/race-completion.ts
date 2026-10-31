@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { saveRaceResult } from '@/lib/supabase-data';
 import { appendRun, type RaceRun } from '@/lib/runs-storage';
 import { supabase } from '@/lib/supabase';
 
@@ -18,6 +19,10 @@ export type RaceCompletionPayload = {
   bestLapSec?: number;
   distanceKm?: number;
   routeId?: string;
+  startLocation?: string;
+  endLocation?: string;
+  routeGeometry?: Record<string, unknown> | null;
+  ghostReplayPath?: string;
 };
 
 export type LocalLeaderboardRecord = RaceCompletionPayload & {
@@ -89,21 +94,25 @@ export async function syncPendingRaceUploads() {
 
   for (const payload of pending) {
     try {
-      const { error } = await supabase.from('races').insert({
-        route_id: payload.routeId ?? null,
-        user_id: payload.userId,
-        vehicle_id: null,
-        total_time: payload.finalTimeSec,
-        average_speed: payload.avgSpeedKmh,
-        max_speed: payload.bestSpeedKmh,
-        distance: payload.distanceKm ?? null,
-        completed_at: new Date(payload.finishedAt).toISOString(),
-        is_valid: true,
+      await saveRaceResult({
+        userId: payload.userId,
+        routeId: payload.routeId ?? null,
+        routeName: payload.route,
+        startLocation: payload.startLocation,
+        endLocation: payload.endLocation,
+        distanceKm: payload.distanceKm ?? null,
+        totalTime: payload.finalTimeSec,
+        averageSpeed: payload.avgSpeedKmh,
+        maxSpeed: payload.bestSpeedKmh,
+        completedAt: payload.finishedAt,
+        routeGeometry: payload.routeGeometry ?? null,
+        ghostReplayPath: payload.ghostReplayPath,
+        lapEntries: (payload.lapTimesSec ?? []).map((lapTime, index) => ({
+          lapNumber: index + 1,
+          lapTime,
+          sectorTimes: null,
+        })),
       });
-
-      if (error) {
-        remaining.push(payload);
-      }
     } catch {
       remaining.push(payload);
     }
@@ -129,24 +138,27 @@ export async function submitCompletedRace(payload: RaceCompletionPayload): Promi
 
   if (supabase && payload.userId) {
     try {
-      const { error } = await supabase.from('races').insert({
-        route_id: payload.routeId ?? null,
-        user_id: payload.userId,
-        vehicle_id: null,
-        total_time: payload.finalTimeSec,
-        average_speed: payload.avgSpeedKmh,
-        max_speed: payload.bestSpeedKmh,
-        distance: payload.distanceKm ?? null,
-        completed_at: new Date(payload.finishedAt).toISOString(),
-        is_valid: true,
+      await saveRaceResult({
+        userId: payload.userId,
+        routeId: payload.routeId ?? null,
+        routeName: payload.route,
+        startLocation: payload.startLocation,
+        endLocation: payload.endLocation,
+        distanceKm: payload.distanceKm ?? null,
+        totalTime: payload.finalTimeSec,
+        averageSpeed: payload.avgSpeedKmh,
+        maxSpeed: payload.bestSpeedKmh,
+        completedAt: payload.finishedAt,
+        routeGeometry: payload.routeGeometry ?? null,
+        ghostReplayPath: payload.ghostReplayPath,
+        lapEntries: (payload.lapTimesSec ?? []).map((lapTime, index) => ({
+          lapNumber: index + 1,
+          lapTime,
+          sectorTimes: null,
+        })),
       });
 
-      if (!error) {
-        return { ok: true, queuedLocally: false };
-      }
-
-      await queueRaceUpload(payload);
-      return { ok: true, queuedLocally: true };
+      return { ok: true, queuedLocally: false };
     } catch {
       await queueRaceUpload(payload);
       return { ok: true, queuedLocally: true };

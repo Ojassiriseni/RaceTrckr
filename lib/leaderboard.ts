@@ -37,6 +37,25 @@ function normalizeDisplayName(value?: string) {
   return value.trim() || 'Driver';
 }
 
+function buildVehicleLabel(row: {
+  vehicles?: { nickname?: string | null; make?: string | null; model?: string | null } | null;
+}) {
+  const vehicle = row.vehicles;
+  if (vehicle?.nickname) return vehicle.nickname;
+  if (vehicle?.make || vehicle?.model) return `${vehicle.make ?? ''} ${vehicle.model ?? ''}`.trim() || 'Vehicle';
+  return 'Vehicle';
+}
+
+function isWithinRange(dateValue: string | null, range: LeaderboardRange) {
+  if (!dateValue) return true;
+  const then = new Date(dateValue).getTime();
+  if (!Number.isFinite(then)) return true;
+  const diffMs = Date.now() - then;
+  if (range === 'today') return diffMs <= 24 * 60 * 60 * 1000;
+  if (range === 'week') return diffMs <= 7 * 24 * 60 * 60 * 1000;
+  return true;
+}
+
 export async function getAvailableRoutes(): Promise<string[]> {
   if (supabase) {
     try {
@@ -69,55 +88,87 @@ export async function getLeaderboardEntries(options: {
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
+      const { data: raceRows, error: raceError } = await supabase
         .from('races')
-        .select('id,user_id,total_time,completed_at,route_id,profiles(username,display_name)')
+        .select('id,user_id,total_time,completed_at,route_id,distance,vehicles!races_vehicle_id_fkey(id,nickname,make,model),routes(id,route_name)')
         .eq('is_valid', true)
         .order('total_time', { ascending: true });
 
-      if (!error && Array.isArray(data)) {
-        const rows = data.map((row) => {
-          const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-          return {
-            userId: row.user_id,
-            username: profile?.username ?? profile?.display_name ?? 'Driver',
-            vehicle: 'Vehicle',
-            route: row.route_id ? 'Route record' : 'Selected route',
-            bestTime: Number(row.total_time) || 0,
-            avatar: 'D',
-          };
-        });
+      if (!raceError && Array.isArray(raceRows)) {
+        const profileIds = [...new Set(raceRows.map((row) => row.user_id).filter(Boolean))];
+        const { data: profiles, error: profileError } = profileIds.length
+          ? await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', profileIds)
+          : { data: [], error: null };
 
-        const filtered = rows.filter((row) => {
-          if (scope === 'friends') return row.userId === options.userId || row.userId === 'local-user';
-          if (scope === 'nearby') return row.userId === options.userId || row.userId === 'local-user';
-          return true;
-        });
+        if (!profileError) {
+          const profileLookup = new Map<string, { username?: string | null; display_name?: string | null; avatar_url?: string | null }>();
+          for (const profile of profiles ?? []) {
+            profileLookup.set(profile.id, profile);
+          }
 
-        if (range === 'today') {
-          return filtered.filter((row) => row.bestTime > 0).slice(0, 25).map((row, index) => ({
-            ...row,
+          let rows = raceRows
+            .filter((row) => isWithinRange(row.completed_at, range))
+            .map((row) => {
+              const profile = profileLookup.get(row.user_id);
+              const routeData = Array.isArray((row as any).routes) ? (row as any).routes[0] : (row as any).routes;
+              const vehicleData = Array.isArray((row as any).vehicles) ? (row as any).vehicles[0] : (row as any).vehicles;
+              const routeName = routeData?.route_name ?? route ?? 'Selected route';
+              const username = profile?.username ?? profile?.display_name ?? 'Driver';
+              return {
+                userId: row.user_id,
+                username: normalizeDisplayName(username),
+                vehicle: buildVehicleLabel({ vehicles: vehicleData }),
+                route: routeName,
+                bestTime: Number(row.total_time) || 0,
+                completedAt: row.completed_at,
+                avatar: (profile?.display_name ?? profile?.username ?? 'D').charAt(0).toUpperCase(),
+              };
+            });
+
+          if (scope === 'friends' && options.userId) {
+            const { data: friendships, error: friendshipsError } = await supabase
+              .from('friendships')
+              .select('requester_id, receiver_id')
+              .or(`requester_id.eq.${options.userId},receiver_id.eq.${options.userId}`)
+              .eq('status', 'accepted');
+
+            if (!friendshipsError && Array.isArray(friendships)) {
+              const friendIds = new Set<string>([options.userId]);
+              for (const item of friendships) {
+                friendIds.add(item.requester_id);
+                friendIds.add(item.receiver_id);
+              }
+              rows = rows.filter((row) => friendIds.has(row.userId));
+            }
+          }
+
+          if (route) {
+            rows = rows.filter((row) => row.route === route);
+          }
+
+          const deduped = new Map<string, { userId: string; username: string; vehicle: string; route: string; bestTime: number; avatar: string; }>();
+          for (const row of rows) {
+            const existing = deduped.get(row.userId);
+            if (!existing || row.bestTime < existing.bestTime) {
+              deduped.set(row.userId, row);
+            }
+          }
+
+          const sorted = Array.from(deduped.values()).sort((a, b) => a.bestTime - b.bestTime);
+          const first = sorted[0]?.bestTime ?? 0;
+
+          return sorted.map((entry, index) => ({
             rank: index + 1,
-            deltaFromFirst: index === 0 ? 0 : row.bestTime - filtered[0].bestTime,
+            userId: entry.userId,
+            username: entry.username,
+            vehicle: entry.vehicle,
+            route: entry.route,
+            bestTime: entry.bestTime,
+            deltaFromFirst: index === 0 ? 0 : entry.bestTime - first,
             positionChange: 0,
+            avatar: entry.avatar,
           }));
         }
-
-        if (route) {
-          return filtered.filter((row) => row.route === route).slice(0, 25).map((row, index) => ({
-            ...row,
-            rank: index + 1,
-            deltaFromFirst: index === 0 ? 0 : row.bestTime - filtered[0].bestTime,
-            positionChange: 0,
-          }));
-        }
-
-        return filtered.slice(0, 25).map((row, index) => ({
-          ...row,
-          rank: index + 1,
-          deltaFromFirst: index === 0 ? 0 : row.bestTime - filtered[0].bestTime,
-          positionChange: 0,
-        }));
       }
     } catch {
       // Continue to the local fallback below.

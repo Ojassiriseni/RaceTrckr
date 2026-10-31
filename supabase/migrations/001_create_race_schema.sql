@@ -9,6 +9,43 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  local_username text;
+  local_display_name text;
+begin
+  local_username := coalesce(new.raw_user_meta_data ->> 'username', split_part(new.email, '@', 1));
+  local_display_name := coalesce(new.raw_user_meta_data ->> 'display_name', local_username);
+
+  if exists (select 1 from public.profiles where username = local_username and id <> new.id) then
+    local_username := local_username || '-' || substr(md5(random()::text), 1, 8);
+  end if;
+
+  insert into public.profiles (id, username, display_name, avatar_url)
+  values (
+    new.id,
+    local_username,
+    local_display_name,
+    coalesce(new.raw_user_meta_data ->> 'avatar_url', null)
+  )
+  on conflict (id) do update
+  set username = excluded.username,
+      display_name = excluded.display_name,
+      avatar_url = excluded.avatar_url;
+
+  return new;
+end;
+$$;
+
+create or replace trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 create table if not exists public.vehicles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
