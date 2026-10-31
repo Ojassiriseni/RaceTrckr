@@ -166,6 +166,9 @@ export default function Home() {
           <TouchableOpacity style={styles.primaryButton} onPress={goPreview}>
             <Text style={styles.primaryButtonText}>Create new run</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={[styles.secondaryButton, { marginTop: 12 }]} onPress={() => router.push('/leaderboard')}>
+            <Text style={styles.secondaryButtonText}>View leaderboard</Text>
+          </TouchableOpacity>
         </LinearGradient>
 
         <View style={styles.panel}>

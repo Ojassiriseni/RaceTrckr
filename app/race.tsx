@@ -12,7 +12,7 @@ import MapView, { Marker, Polyline, Circle } from '../components/map-view';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useRaceSettings } from '@/contexts/race-settings-context';
-import { appendRun } from '@/lib/runs-storage';
+import { submitCompletedRace } from '@/lib/race-completion';
 
 const leaderboardStore = {
   data: [] as any[],
@@ -111,7 +111,7 @@ export default function Race() {
   }, [startTime]);
 
   const commitFinish = useCallback(
-    (
+    async (
       totalMs: number,
       lapsSnapshot: number[],
       label: string,
@@ -135,21 +135,31 @@ export default function Race() {
         bestLapSec: bestLap?.toFixed(2)
       });
 
-      if (user) {
-        void appendRun(user.userId, {
-          route: label,
-          finalTimeSec: totalSec,
-          avgSpeedKmh: avgKmh,
-          bestSpeedKmh: bestKmh,
-          finishedAt: Date.now(),
-          mode: lapMode ? 'lap' : 'sprint',
-          lapCount: lapMode ? lapsSnapshot.length : undefined,
-          lapTimesSec: lapMode && lapsSnapshot.length ? lapsSnapshot : undefined,
-          bestLapSec: bestLap
-        });
-      }
+      const payload: any = {
+        userId: user?.userId ?? 'local-user',
+        email: user?.email,
+        route: label,
+        vehicle: 'Local vehicle',
+        finalTimeSec: totalSec,
+        avgSpeedKmh: avgKmh,
+        bestSpeedKmh: bestKmh,
+        finishedAt: Date.now(),
+        mode: lapMode ? 'lap' : 'sprint',
+        lapCount: lapMode ? lapsSnapshot.length : undefined,
+        lapTimesSec: lapMode && lapsSnapshot.length ? lapsSnapshot : undefined,
+        bestLapSec: bestLap,
+        distanceKm: routeCoords.length > 1 ? routeCoords.reduce((sum, point, index, arr) => {
+          if (index === 0 || !arr[index - 1]) return sum;
+          const prev = arr[index - 1];
+          const latDelta = point.latitude - prev.latitude;
+          const lngDelta = point.longitude - prev.longitude;
+          return sum + Math.sqrt(latDelta * latDelta + lngDelta * lngDelta) * 111.32;
+        }, 0) : undefined,
+      };
+
+      await submitCompletedRace(payload);
     },
-    [user, lapMode]
+    [user, lapMode, routeCoords]
   );
 
 
@@ -362,7 +372,7 @@ export default function Race() {
               const bestKmh = speeds.current.length
                 ? Math.max(...speeds.current)
                 : 0;
-              commitFinish(
+              void commitFinish(
                 final,
                 [],
                 `${start} → ${end}`,
@@ -527,7 +537,7 @@ export default function Race() {
               const total = Date.now() - startTime;
               const laps = [...lapTimesSecRef.current];
               const label = laps.length === 0 ? 'Lap track (session)' : `Lap track (${laps.length} lap${laps.length === 1 ? '' : 's'})`;
-              commitFinish(total, laps, label, avgSpeed, bestSpeed);
+              void commitFinish(total, laps, label, avgSpeed, bestSpeed);
             }} activeOpacity={0.85} style={{ backgroundColor: theme.colors.purple, borderRadius: 15, paddingVertical: 16, alignItems: 'center' }}>
               <Text style={{ color: '#130D1B', fontWeight: '900', letterSpacing: 1.1 }}>END RUN</Text>
             </TouchableOpacity>

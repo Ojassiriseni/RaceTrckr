@@ -44,6 +44,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Leaderboard',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol size={26} name="flag.checkered" color={focused ? theme.colors.primary : (typeof color === 'string' ? color : theme.colors.muted)} />
+          )
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
